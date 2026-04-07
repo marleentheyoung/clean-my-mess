@@ -1,0 +1,39 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+.env
+!.env.example
+*.egg-info/
+dist/
+archive/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Data (raw and processed data should not be committed)
+data/raw/
+data/processed/
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.pdf
+
+# Jupyter
+.ipynb_checkpoints/
