@@ -1,13 +1,13 @@
 import numpy as np
-import LoM_epsilons as lom
+import lom as lom
 import tauchen as tauch
-import par_epsilons as parfile
+import par as parfile
 import misc_functions as misc
 import matplotlib.pyplot as plt
 import grid_creation as grid_creation
 import experiments as experiments
 import equilibrium as equil
-import household_problem_epsilons_nolearning as household_problem  
+import household_problem as household_problem  
 import simulation as sim
 
 def plot_pricepaths(par, grids, mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C, vCoeff_NC, vCoeff_C_RE, vCoeff_NC_RE, vCoeff_C_terminal_RE, vCoeff_NC_terminal_RE, vCoeff_C_terminal_HE, vCoeff_NC_terminal_HE):

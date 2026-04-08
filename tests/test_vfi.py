@@ -10,7 +10,7 @@ SNAPSHOTS_DIR = os.path.join(os.path.dirname(__file__), "snapshots")
 
 def test_solve_ss_returns_finite(par_reduced, grids_and_markov_reduced):
     """solve_ss produces finite value functions (no NaN/Inf) on reduced grids."""
-    import household_problem_epsilons_nolearning as hp
+    import household_problem as hp
 
     grids, mMarkov = grids_and_markov_reduced
     dCoeff_C = 0.69906474  # vCoeff_C_initial[0]
@@ -29,7 +29,7 @@ def test_solve_ss_returns_finite(par_reduced, grids_and_markov_reduced):
 
 def test_solve_ss_output_shapes(par_reduced, grids_and_markov_reduced):
     """solve_ss output arrays have expected dimensionality."""
-    import household_problem_epsilons_nolearning as hp
+    import household_problem as hp
 
     grids, mMarkov = grids_and_markov_reduced
     dCoeff_C = 0.69906474
@@ -52,7 +52,7 @@ def test_solve_ss_output_shapes(par_reduced, grids_and_markov_reduced):
 
 def test_solve_ss_value_functions_nonzero(par_reduced, grids_and_markov_reduced):
     """Value functions are not trivially zero (solve_ss actually computed something)."""
-    import household_problem_epsilons_nolearning as hp
+    import household_problem as hp
 
     grids, mMarkov = grids_and_markov_reduced
     dCoeff_C = 0.69906474
@@ -70,7 +70,7 @@ def test_solve_ss_value_functions_nonzero(par_reduced, grids_and_markov_reduced)
 
 def test_solve_ss_snapshot(par_reduced, grids_and_markov_reduced):
     """Pin solve_ss output against saved snapshot (created on first run)."""
-    import household_problem_epsilons_nolearning as hp
+    import household_problem as hp
 
     grids, mMarkov = grids_and_markov_reduced
     dCoeff_C = 0.69906474

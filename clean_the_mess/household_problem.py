@@ -12,9 +12,9 @@ import numpy as np
 import continuation_value_nolearning as continuation_value_epsilons
 import stayer_problem as stayer_problem
 import stayer_problem_renter as stayer_problem_renter
-import buyer_problem_epsilons as buyer_problem_epsilons
+import buyer_problem as buyer_problem
 from numba import njit
-import LoM_epsilons as lom
+import lom as lom
 import misc_functions as misc
 
 ###########################################################
@@ -126,8 +126,8 @@ def solve(grids, par, iNj, mMarkov,vCoeff_C,vCoeff_NC, sceptics=True, welfare=Tr
                    
                     vt_renter[t_index,j, k_index,g_index,:,e_index],qt_renter[t_index,j, k_index,g_index,:,e_index], b_renter[t_index,j, k_index,g_index,:,e_index], vt_renter_wf[t_index,j, k_index,g_index,:,e_index] = stayer_problem_renter.solve(par, grids, j, k_index, g_index, t_index, dP_C,dP_NC, dP_C_prime,dP_NC_prime, w_renter,q_renter, w_renter_wf, welfare)
 
-                    vt_buy_c[t_index,j, k_index,g_index,:,e_index], qt_buy_c[t_index,j, k_index,g_index,:,e_index], vt_buy_c_wf[t_index,j, k_index,g_index,:,e_index] = buyer_problem_epsilons.solve(par, grids, j, k_index,  g_index, e_index, dP_C, vt_stay_c[t_index,j, k_index,g_index,:,:,:,e_index], c_c[t_index,j, k_index,g_index,:,:,:,e_index], vt_stay_c_wf[t_index,j, k_index,g_index,:,:,:,e_index], welfare)
-                    vt_buy_nc[t_index,j, k_index,g_index,:,e_index], qt_buy_nc[t_index,j, k_index,g_index,:,e_index], vt_buy_nc_wf[t_index,j, k_index,g_index,:,e_index] = buyer_problem_epsilons.solve(par, grids, j, k_index, g_index_nc, e_index, dP_NC, vt_stay_nc[t_index,j, k_index,g_index,:,:,:,e_index], c_nc[t_index,j, k_index,g_index,:,:,:,e_index], vt_stay_nc_wf[t_index,j, k_index,g_index,:,:,:,e_index], welfare)
+                    vt_buy_c[t_index,j, k_index,g_index,:,e_index], qt_buy_c[t_index,j, k_index,g_index,:,e_index], vt_buy_c_wf[t_index,j, k_index,g_index,:,e_index] = buyer_problem.solve(par, grids, j, k_index,  g_index, e_index, dP_C, vt_stay_c[t_index,j, k_index,g_index,:,:,:,e_index], c_c[t_index,j, k_index,g_index,:,:,:,e_index], vt_stay_c_wf[t_index,j, k_index,g_index,:,:,:,e_index], welfare)
+                    vt_buy_nc[t_index,j, k_index,g_index,:,e_index], qt_buy_nc[t_index,j, k_index,g_index,:,e_index], vt_buy_nc_wf[t_index,j, k_index,g_index,:,e_index] = buyer_problem.solve(par, grids, j, k_index, g_index_nc, e_index, dP_NC, vt_stay_nc[t_index,j, k_index,g_index,:,:,:,e_index], c_nc[t_index,j, k_index,g_index,:,:,:,e_index], vt_stay_nc_wf[t_index,j, k_index,g_index,:,:,:,e_index], welfare)
                 
                 #We need an additional block of code because the trick of exploiting already computed continuation values doesn't work when t==0 or j==0 
                 if welfare==True:
@@ -268,8 +268,8 @@ def solve_ss(grids, par, iNj, mMarkov,dCoeff_C, dCoeff_NC, initial = True, scept
                     vt_stay_nc[0,j, k_index,g_index,:,:,:,e_index], c_nc[0,j, k_index,g_index,:,:,:,e_index],  qt_stay_nc[0,j, k_index,g_index,:,:,:,e_index], b_stay_nc[0,j, k_index,g_index,:,:,:,e_index], vt_stay_nc_wf[0,j, k_index,g_index,:,:,:,e_index] = stayer_problem.solve(par, grids, j, k_index, g_index_nc, w_nc,q_nc, w_nc_wf, welfare)
                     vt_renter[0,j, k_index,g_index,:,e_index],qt_renter[0,j, k_index,g_index,:,e_index], b_renter[0,j, k_index,g_index,:,e_index], vt_renter_wf[0,j, k_index,g_index,:,e_index] = stayer_problem_renter.solve(par, grids, j, k_index, g_index, t_index, dP_C,dP_NC, dP_C,dP_NC, w_renter,q_renter, w_renter_wf, welfare)
     
-                    vt_buy_c[0,j, k_index,g_index,:,e_index], qt_buy_c[0,j, k_index,g_index,:,e_index], vt_buy_c_wf[0,j, k_index,g_index,:,e_index] = buyer_problem_epsilons.solve(par, grids, j, k_index,  g_index, e_index, dP_C, vt_stay_c[0,j, k_index,g_index,:,:,:,e_index], c_c[0,j, k_index,g_index,:,:,:,e_index], vt_stay_c_wf[0,j, k_index,g_index,:,:,:,e_index], welfare)
-                    vt_buy_nc[0,j, k_index,g_index,:,e_index], qt_buy_nc[0,j, k_index,g_index,:,e_index], vt_buy_nc_wf[0,j, k_index,g_index,:,e_index] = buyer_problem_epsilons.solve(par, grids, j, k_index, g_index_nc, e_index, dP_NC, vt_stay_nc[0,j, k_index,g_index,:,:,:,e_index], c_nc[0,j, k_index,g_index,:,:,:,e_index], vt_stay_nc_wf[0,j, k_index,g_index,:,:,:,e_index], welfare)
+                    vt_buy_c[0,j, k_index,g_index,:,e_index], qt_buy_c[0,j, k_index,g_index,:,e_index], vt_buy_c_wf[0,j, k_index,g_index,:,e_index] = buyer_problem.solve(par, grids, j, k_index,  g_index, e_index, dP_C, vt_stay_c[0,j, k_index,g_index,:,:,:,e_index], c_c[0,j, k_index,g_index,:,:,:,e_index], vt_stay_c_wf[0,j, k_index,g_index,:,:,:,e_index], welfare)
+                    vt_buy_nc[0,j, k_index,g_index,:,e_index], qt_buy_nc[0,j, k_index,g_index,:,e_index], vt_buy_nc_wf[0,j, k_index,g_index,:,e_index] = buyer_problem.solve(par, grids, j, k_index, g_index_nc, e_index, dP_NC, vt_stay_nc[0,j, k_index,g_index,:,:,:,e_index], c_nc[0,j, k_index,g_index,:,:,:,e_index], vt_stay_nc_wf[0,j, k_index,g_index,:,:,:,e_index], welfare)
     
     
     

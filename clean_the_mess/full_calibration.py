@@ -8,10 +8,10 @@ import equilibrium as equil
 import misc_functions as misc
 import tauchen as tauch
 import grid_creation as grid_creation
-import household_problem_epsilons_nolearning as household_problem
+import household_problem as household_problem
 import simulation as sim
 import moments as find_moments
-import LoM_epsilons as lom
+import lom as lom
 import nlopt
 
 

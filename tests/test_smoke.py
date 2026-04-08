@@ -7,12 +7,12 @@ import numpy as np
 
 def test_all_modules_import():
     """All 24 Python modules import without error."""
-    import solve_epsilons
+    import solve
     import tauchen
     import grid_creation
     import simulation
     import equilibrium
-    import household_problem_epsilons_nolearning
+    import household_problem
     import moments
     import welfare
     import experiments
@@ -20,12 +20,12 @@ def test_all_modules_import():
     import interp
     import misc_functions
     import grids
-    import par_epsilons
-    import utility_epsilons
-    import LoM_epsilons
+    import par
+    import utility
+    import lom
     import stayer_problem
     import stayer_problem_renter
-    import buyer_problem_epsilons
+    import buyer_problem
     import buyer_problem_simulation
     import mortgage_choice_simulation
     import mortgage_choice_simulation_exc
@@ -35,7 +35,7 @@ def test_all_modules_import():
 
 def test_par_dict_keys():
     """Parameter dict has expected calibration keys."""
-    import par_epsilons as parfile
+    import par as parfile
     required_keys = ["dBeta", "dSigma", "iNj", "dPhi", "dDelta", "r", "r_m",
                      "iNumStates", "dRho", "dSigmaeps", "iXin", "iBmax"]
     for key in required_keys:
@@ -44,7 +44,7 @@ def test_par_dict_keys():
 
 def test_par_values_final():
     """Spot-check that key parameters match the final calibration."""
-    import par_epsilons as parfile
+    import par as parfile
     assert parfile.par_dict["iNj"] == 30
     assert parfile.par_dict["j_ret"] == 23
     assert parfile.par_dict["iNumStates"] == 5

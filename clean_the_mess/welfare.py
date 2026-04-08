@@ -7,7 +7,7 @@ Created on Thu Mar 26 12:00:10 2026
 
 import numpy as np
 import misc_functions as misc
-import household_problem_epsilons_nolearning as household_problem  
+import household_problem as household_problem  
 import simulation as sim
 import equilibrium as equil
 import simulate_initial_joint as initial_joint_sim

@@ -4,7 +4,7 @@ buyer_problem.py
 
 import numpy as np
 from numba import njit
-import utility_epsilons as ut
+import utility as ut
 import interp as interpfun
 
 NEG_INF = -1e12

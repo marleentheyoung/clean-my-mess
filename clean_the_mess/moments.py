@@ -9,7 +9,7 @@ import misc_functions as misc
 from numba import njit
 from numba import prange
 import interp as interpfun
-import LoM_epsilons as lom
+import lom as lom
 
 @njit
 def calc_moments(par, grids, t_index, mDist_c, mDist_nc,mDist_renter, dPi_S, dPi_L, vCoeff_C, vCoeff_NC):

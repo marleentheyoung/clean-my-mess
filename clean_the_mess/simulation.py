@@ -7,11 +7,11 @@ Purpose:
 import numpy as np
 from numba import njit
 import interp as interp
-import LoM_epsilons as lom
+import lom as lom
 import misc_functions as misc
 import buyer_problem_simulation as buy_sim
 import numba as nb
-import utility_epsilons as ut
+import utility as ut
 import mortgage_choice_simulation as mortgage_sim
 import mortgage_choice_simulation_exc as mortgage_sim_exc
 import simulate_initial_joint as initial_joint_sim

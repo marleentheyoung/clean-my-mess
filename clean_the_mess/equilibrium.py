@@ -8,9 +8,9 @@ import numpy as np
 import numba as nb
 from numba import prange
 from numba import njit
-import household_problem_epsilons_nolearning as household_problem
+import household_problem as household_problem
 import simulation as sim
-import LoM_epsilons as lom
+import lom as lom
 import math
 import time
 import misc_functions as misc

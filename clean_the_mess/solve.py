@@ -10,7 +10,7 @@ import numpy as np
 import time
 import misc_functions as misc
 import tauchen as tauch
-import par_epsilons as parfile
+import par as parfile
 import grid_creation as grid_creation
 import welfare as welfare_stats
 

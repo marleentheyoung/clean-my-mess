@@ -35,7 +35,7 @@ def test_grid_creation_deterministic(grids_and_markov_full):
 
 def test_solve_ss_full_grid_finite(par_full, grids_and_markov_full):
     """solve_ss on full grids produces finite value functions."""
-    import household_problem_epsilons_nolearning as hp
+    import household_problem as hp
 
     grids, mMarkov = grids_and_markov_full
     dCoeff_C = 0.69906474
@@ -54,7 +54,7 @@ def test_solve_ss_full_grid_finite(par_full, grids_and_markov_full):
 
 def test_solve_ss_full_grid_snapshot(par_full, grids_and_markov_full):
     """Pin solve_ss full-grid output against saved snapshot."""
-    import household_problem_epsilons_nolearning as hp
+    import household_problem as hp
 
     grids, mMarkov = grids_and_markov_full
     dCoeff_C = 0.69906474
