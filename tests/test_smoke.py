@@ -1,54 +1,56 @@
 """Stage A: Smoke tests (<30s after Numba compilation).
 
-Verifies all modules import, parameters load, grids are well-formed.
+Verifies all model.* modules import, parameters load, grids are well-formed.
 """
 import numpy as np
 
 
 def test_all_modules_import():
-    """All 24 Python modules import without error."""
-    import solve
-    import tauchen
-    import grid_creation
-    import simulation
-    import equilibrium
-    import household_problem
-    import moments
-    import welfare
-    import experiments
-    import plot_creation
-    import interp
-    import misc_functions
-    import grids
-    import config
-    import utility
-    import lom
-    import stayer_problem
-    import stayer_problem_renter
-    import buyer_problem
-    import buyer_problem_simulation
-    import mortgage_choice_simulation
-    import mortgage_choice_simulation_exc
-    import simulate_initial_joint
-    import continuation_value_nolearning
+    """All model.* modules import without error."""
+    from model.config import create_par_dict
+    from model.utils import construct_jitclass
+    from model.grids import create, nonlinspace_jit
+    from model.tauchen import tauchen
+    from model.interp import binary_search, interp_1d, interp_3d
+    from model.utility import u, u_c, W_bequest
+    from model.lom import LoM
+    from model.household.vfi import solve, solve_ss
+    from model.household.continuation import solve_last_period_owners_C
+    from model.household.stayer import solve as _
+    from model.household.renter import solve as _
+    from model.household.buyer import solve as _
+    from model.simulation.distribution import stat_dist_finder
+    from model.simulation.excess_demand import excess_demand_continuous
+    from model.simulation.buyer_sim import solve as _
+    from model.simulation.mortgage_sim import solve as _
+    from model.simulation.mortgage_sim_exc import solve as _
+    from model.simulation.initial_joint import initial_joint
+    from model.equilibrium.solver import find_coefficients
+    from model.analysis.moments import calc_moments
+    from model.analysis.welfare import find_expenditure_equiv
+    from model.analysis.experiments import full_information_experiment
+    from model.run import main
+    from model.plots import plot_pricepaths
 
 
 def test_par_dict_keys():
     """Parameter dict has expected calibration keys."""
-    import config as parfile
+    from model.config import create_par_dict
+    par_dict = create_par_dict()
     required_keys = ["dBeta", "dSigma", "iNj", "dPhi", "dDelta", "r", "r_m",
                      "iNumStates", "dRho", "dSigmaeps", "iXin", "iBmax"]
     for key in required_keys:
-        assert key in parfile.par_dict, f"Missing parameter: {key}"
+        assert key in par_dict, f"Missing parameter: {key}"
 
 
 def test_par_values_final():
     """Spot-check that key parameters match the final calibration."""
-    import config as parfile
-    assert parfile.par_dict["iNj"] == 30
-    assert parfile.par_dict["j_ret"] == 23
-    assert parfile.par_dict["iNumStates"] == 5
-    assert parfile.par_dict["iXin"] == 7
+    from model.config import create_par_dict
+    par_dict = create_par_dict()
+    assert par_dict["iNj"] == 30
+    assert par_dict["j_ret"] == 23
+    assert par_dict["iNumStates"] == 5
+    assert par_dict["iXin"] == 7
 
 
 def test_grid_creation(grids_and_markov_full):
@@ -78,9 +80,7 @@ def test_grid_shapes_nontrivial(grids_and_markov_full):
 def test_vpdf_z_conditional_structure(grids_and_markov_full):
     """vPDF_z has intentional conditional probability structure (not a proper PDF)."""
     grids, _ = grids_and_markov_full
-    # Element 0 = P(no damage | no flood) = 1
     assert grids.vPDF_z[0] == 1.0
-    # Elements 1-3 = P(damage | flood), should sum to 1
     assert np.allclose(grids.vPDF_z[1:].sum(), 1.0, atol=1e-10)
 
 

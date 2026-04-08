@@ -6,8 +6,13 @@ The slow find_expenditure_equiv test is marked @pytest.mark.slow — run manuall
 import numpy as np
 import os
 import pytest
+from model.household.vfi import solve_ss
+from model.analysis.welfare import find_expenditure_equiv
 
 SNAPSHOTS_DIR = os.path.join(os.path.dirname(__file__), "snapshots")
+
+DCOEFF_C = 0.69906474
+DCOEFF_NC = 0.78259554
 
 
 def test_grid_creation_deterministic(grids_and_markov_full):
@@ -35,14 +40,10 @@ def test_grid_creation_deterministic(grids_and_markov_full):
 
 def test_solve_ss_full_grid_finite(par_full, grids_and_markov_full):
     """solve_ss on full grids produces finite value functions."""
-    import household_problem as hp
-
     grids, mMarkov = grids_and_markov_full
-    dCoeff_C = 0.69906474
-    dCoeff_NC = 0.78259554
 
-    result = hp.solve_ss(grids, par_full, par_full.iNj, mMarkov,
-                         dCoeff_C, dCoeff_NC, initial=True, sceptics=True, welfare=False)
+    result = solve_ss(grids, par_full, par_full.iNj, mMarkov,
+                      DCOEFF_C, DCOEFF_NC, initial=True, sceptics=True, welfare=False)
 
     vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter = result
 
@@ -54,14 +55,10 @@ def test_solve_ss_full_grid_finite(par_full, grids_and_markov_full):
 
 def test_solve_ss_full_grid_snapshot(par_full, grids_and_markov_full):
     """Pin solve_ss full-grid output against saved snapshot."""
-    import household_problem as hp
-
     grids, mMarkov = grids_and_markov_full
-    dCoeff_C = 0.69906474
-    dCoeff_NC = 0.78259554
 
-    result = hp.solve_ss(grids, par_full, par_full.iNj, mMarkov,
-                         dCoeff_C, dCoeff_NC, initial=True, sceptics=True, welfare=False)
+    result = solve_ss(grids, par_full, par_full.iNj, mMarkov,
+                      DCOEFF_C, DCOEFF_NC, initial=True, sceptics=True, welfare=False)
 
     vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter = result
 
@@ -74,10 +71,9 @@ def test_solve_ss_full_grid_snapshot(par_full, grids_and_markov_full):
         return
 
     ref = np.load(snapshot_path)
-    for name in ["vt_stay_c", "vt_stay_nc", "vt_renter", "b_stay_c", "b_stay_nc", "b_renter"]:
-        current = [vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter][
-            ["vt_stay_c", "vt_stay_nc", "vt_renter", "b_stay_c", "b_stay_nc", "b_renter"].index(name)]
-        assert np.allclose(current, ref[name], atol=1e-10, rtol=1e-10), \
+    names = ["vt_stay_c", "vt_stay_nc", "vt_renter", "b_stay_c", "b_stay_nc", "b_renter"]
+    for i, name in enumerate(names):
+        assert np.allclose(result[i], ref[name], atol=1e-10, rtol=1e-10), \
             f"{name} drifted from snapshot on full grids"
 
 
@@ -87,13 +83,12 @@ def test_find_expenditure_equiv(par_full, grids_and_markov_full):
 
     Run manually with: pytest tests/test_regression.py -m slow
     """
-    import welfare as welfare_stats
     from conftest import VCOEFF_C_INITIAL, VCOEFF_NC_INITIAL, VCOEFF_C, VCOEFF_NC
 
     grids, mMarkov = grids_and_markov_full
 
     tax_equiv_C, tax_equiv_NC, tax_equiv_renter, tax_equiv_newborns = \
-        welfare_stats.find_expenditure_equiv(
+        find_expenditure_equiv(
             par_full, grids, mMarkov,
             VCOEFF_C_INITIAL, VCOEFF_NC_INITIAL, VCOEFF_C, VCOEFF_NC)
 

@@ -12,7 +12,7 @@ import model.utils as misc
 import model.simulation.buyer_sim as buy_sim
 import numba as nb
 import model.utility as ut
-import mortgage_choice_simulation as mortgage_sim
+import model.simulation.mortgage_sim as mortgage_sim
 import model.simulation.mortgage_sim_exc as mortgage_sim_exc
 import model.simulation.initial_joint as initial_joint_sim
 import model.tauchen as tauch
