@@ -16,25 +16,6 @@ import nlopt
 
 
 
-def DoubleGrid(vA, vH):
-    """Returns a iNa*iNh x 2 matrix containing all possible combinations of saving and housing
-
-    Args:
-        vA (vector): Grid of possible savings
-        vH (vector): Grid of possible house values
-
-    Returns:
-        mAH (matrix, float): Grid
-    """
-    iNa = vA.shape[0]
-    iNh = vH.shape[0]
-
-    vH_rep = np.repeat(vH, iNa)
-    vA_seq = np.array(list(vA) * iNh)
-    mAH = np.array([vA_seq, vH_rep])
-
-    return mAH
-    
 
 
 

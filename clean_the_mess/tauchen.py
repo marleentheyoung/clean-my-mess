@@ -140,28 +140,3 @@ def combine_vectors(vE, vE_trans, vE_stationary, vE_trans_stationary):
     return sum_vec, prob_vec
 
 
-###########################################################
-### main#
-#def main():
-    # Magic numbers
-    
-    ## Income proces
-#    dRho = 0.96
-##    dSigmaeps = 0.12
-#    iNumStates = 5
-#    iM = 3
-#    J = 15
-
-    # Initialisation
-    
-    
-    # Estimation
-#    mMarkov, vZ = tauchen(dRho, dSigmaeps, iNumStates, iM)
-#    vStationary_Y = invar_dist(mMarkov)
-#    chi = lifecycle(J)
-#    median = median_inc(chi, vZ, vStationary_Y)
-
-###########################################################
-### start main
-#if __name__ == "__main__":
-#    main()

@@ -53,55 +53,6 @@ def create(par, experiment=False):
     #Beyond the point where the biggest house can be bought with no mortgage and value functions are essentially linear, wider grid spacing is fine
     #We use a wider cut-off than vH[-1] because of the possibility of holding cash in hand and mortgage debt simultaneously (house price does not exceed 1 under normal calibration)
     
-    """
-    if par.iBmax>15:
-        ##Make sure the part of the value function with high curvature is adequately covered
-        vX_left_tail=np.linspace(0.01,1,par.iNb_left_tail)            
-        vX_left_remainder=np.linspace(1,15,par.iNb_left)  
-        vX_left=np.append(vX_left_tail[:-1], vX_left_remainder)
-        
-        #Beyond income 15, no need for narrow grid spacing
-        max_income=np.exp(np.max(vChi)+np.max(vE_combined)-np.log(median_inc))
-        gridspace_left=(15-1)/(par.iNb_left-1)
-        phi_right=np.log((par.iBmax+max_income-15)/gridspace_left)/np.log(par.iNb_right-1)
-        vX_right=grid.nonlinspace_jit(15,par.iBmax+max_income, par.iNb_right, phi_right)
-        vX=np.append(vX_left,vX_right[1:])
-        vM=vX
-        
-        vX_sim_left_tail=np.linspace(0,1,par.iNb_left_tail*2)      
-        vX_sim_left_remainder=np.linspace(1,15,par.iNb_left*2)  
-        vX_sim_left=np.append(vX_sim_left_tail[:-1], vX_sim_left_remainder)        
-
-        gridspace_left=(15-1)/(par.iNb_left*2-1)
-        phi_right=np.log((par.iBmax+max_income-15)/gridspace_left)/np.log(par.iNb_right*2-1)
-        vX_sim_right=grid.nonlinspace_jit(15,par.iBmax+max_income, par.iNb_right*2, phi_right)
-        vX_sim=np.append(vX_sim_left, vX_sim_right[1:])
-        vM_sim=vX_sim
-                
-        vB_left_tail=np.linspace(0,1,par.iNb_left_tail)      
-        vB_left_remainder=np.linspace(1,15,par.iNb_left)  
-        vB_left=np.append(vB_left_tail[:-1], vB_left_remainder)      
-
-        gridspace_left=(15)/(par.iNb_left-1)
-        phi_right=np.log((par.iBmax-15)/gridspace_left)/np.log(par.iNb_right-1)
-    
-        vB_right=grid.nonlinspace_jit(15,par.iBmax, par.iNb_right,phi_right)
-        vB=np.append(vB_left,vB_right[1:])
-    else:
-        vB_left_tail=np.linspace(0,1,par.iNb_left_tail)    
-        vB_remainder=grid.nonlinspace_jit(par.iBmin, par.iBmax, par.iNb_left+par.iNb_right, par.nonlingrid)
-        vB=np.append(vB_left_tail[:-1], vB_remainder)
-        
-        vX_left_tail=np.linspace(0.01,1,par.iNb_left_tail)  
-        vX_remainder=grid.nonlinspace_jit(0.01, par.iBmax*(1+par.r)+np.exp(np.max(vChi)+np.max(vE_combined)-np.log(median_inc)), par.iNb_left+par.iNb_right, par.nonlingrid_big)
-        vX=np.append(vX_left_tail[:-1], vX_remainder)
-        vM=vX
-        
-        vX_sim_left_tail=np.linspace(0,1,par.iNb_left_tail*2)  
-        vX_sim_remainder=grid.nonlinspace_jit(1, par.iBmax*(1+par.r), (par.iNb_left+par.iNb_right)*2, par.nonlingrid_big)
-        vX_sim=np.append(vX_sim_left_tail[:-1], vX_sim_remainder)
-        vM_sim=vX_sim       
-    """
     max_income=np.exp(np.max(vChi)+np.max(vE_combined)-np.log(median_inc))
     #vX=grid.nonlinspace_jit(min_inc, par.iBmax*(1+par.r)+max_income, par.iNb, 1.4)
     #The lowest value of vX should be s.t. the smallest rental unit remains affordable with pos consumption. 
