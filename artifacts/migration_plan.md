@@ -3,12 +3,19 @@
 Phase 3 (dead code removal) is DONE. Phases 5a-5b (quick wins, medium effort) will execute before this plan. This plan covers Phase 5c only -- the large restructure.
 
 **Pre-condition:** Before starting Phase 5c, ensure:
-- All dead code is removed (Phase 3 done)
-- Interpolation dedup is done (Phase 5a -- consolidate into `interp.py`)
-- `_epsilons` suffixes are removed from filenames (Phase 5b)
-- `fastmath` inconsistency between `mortgage_choice_simulation.py` and `_exc` is resolved (Phase 5b)
-- `grids.PDF_z` -> `grids.vPDF_z` bug is fixed (Phase 5a)
-- Reference outputs are saved for regression testing
+- All dead code is removed (Phase 3 -- DONE)
+- Interpolation dedup is done (5b.1 -- DONE)
+- `_epsilons` suffixes are removed from filenames (5b.8 -- DONE)
+- `fastmath` difference between `mortgage_choice_simulation.py` and `_exc` is **documented, not resolved** (5b.4 was documentation only -- the files stay separate with different fastmath settings)
+- `grids.PDF_z` bug resolved by deleting dead bequest functions (5b.3 -- DONE)
+- Reference outputs are saved for regression testing (Phase 4 -- DONE)
+
+**Human review decisions applied:**
+- Shims must include `# DEPRECATION: This shim will be removed in Step 7. Update imports to use model.* paths.` comment
+- simulation.py split reduced from 4 files to 2 (public API + private helpers) -- see Step 4b
+- mortgage_choice_simulation.py and _exc.py stay as separate files (different fastmath settings)
+- net_income moves into utility.py, not a standalone income.py -- see Step 2g
+- config.py creation follows task_queue.md 5c.1 (the authority), not this plan's Step 2e
 
 **Testing protocol for every step:** After each commit, run:
 ```python
@@ -45,8 +52,10 @@ These modules have no local imports, so moving them cannot break anything intern
 Copy file. Add re-export in `model/__init__.py`. Create a shim at the old location:
 ```python
 # clean_the_mess/tauchen.py (shim)
+# DEPRECATION: This shim will be removed in Step 7. Update imports to use model.tauchen.
 from model.tauchen import *
 ```
+**All shims must include this deprecation comment.** This prevents them from becoming permanent.
 
 **Test:** `from model.tauchen import tauchen; print('OK')`
 
@@ -82,15 +91,15 @@ Create shim at old location.
 
 **Commit message:** `move lom.py into model/ package`
 
-### Step 2e: Create `model/config.py` from `par_epsilons.py`
+### Step 2e: Create `model/config.py` from `par.py`
 
-Move `par_epsilons.py` content into `model/config.py`. Rename the function to `create_par_dict()`. Add `SOLVER_SETTINGS` dict (extracted in config_extraction.md).
+**Defers to task_queue.md 5c.1** which is the authority on config.py creation. That task specifies: merge parameter definitions from `par.py`, `full_calibration.py`, and `grid_creation.py` into one `config.py` with a `create_par_dict()` function. Move the `vPi_S_median` mutation (currently at module level) inside the function.
 
-Create shim at old location.
+Create shim at old `par.py` location with deprecation comment.
 
 **Test:** `from model.config import create_par_dict; par_dict = create_par_dict(); print(par_dict['dBeta'])`
 
-**Commit message:** `move parameter definitions into model/config.py`
+**Commit message:** `create model/config.py with create_par_dict() [task 5c.1]`
 
 ### Step 2f: Create `model/utils.py` from remainder of `misc_functions.py`
 
@@ -102,13 +111,13 @@ Create shim at old location.
 
 **Commit message:** `move utility functions into model/utils.py`
 
-### Step 2g: Create `model/income.py` from `misc_functions.py:net_income`
+### Step 2g: Move `net_income` into `model/utility.py`
 
-Extract `net_income` into `model/income.py`.
+Move `net_income` from `misc_functions.py` into `model/utility.py` (where other economic primitives live). A standalone `income.py` with one function would be over-modularized. Update the re-export in `misc_functions.py` shim.
 
-**Test:** `from model.income import net_income; print('OK')`
+**Test:** `from model.utility import net_income; print('OK')`
 
-**Commit message:** `extract net_income into model/income.py`
+**Commit message:** `move net_income into model/utility.py`
 
 ---
 
@@ -154,11 +163,14 @@ Create shims at old locations.
 ### Step 3d: Move simulation sub-modules (non-split files)
 
 1. `buyer_problem_simulation.py` -> `model/simulation/buyer_sim.py`
-2. `mortgage_choice_simulation.py` + `mortgage_choice_simulation_exc.py` -> `model/simulation/mortgage_sim.py`
+2. `mortgage_choice_simulation.py` -> `model/simulation/mortgage_sim.py` (keeps `@njit(fastmath=True)`)
+3. `mortgage_choice_simulation_exc.py` -> `model/simulation/mortgage_sim_exc.py` (keeps plain `@njit`)
+
+**Do NOT merge the two mortgage files.** They have different `fastmath` settings which affect numerical results. The difference is documented (task 5b.4) but not resolved — merging would require choosing one setting.
 
 Update imports to use `model.utils`, `model.interp`.
 
-Create shims at old locations.
+Create shims at old locations with deprecation comments.
 
 **Test:** Import each and verify functions exist.
 
@@ -190,22 +202,29 @@ Create shim at old location.
 
 **Commit message:** `move VFI orchestrator into model/household/vfi.py`
 
-### Step 4b: Split `simulation.py` into `model/simulation/` sub-modules
+### Step 4b: Split `simulation.py` into 2 `model/simulation/` sub-modules
 
-This is the most complex step. Split the 1,263-line file into:
+This is the most complex step. The original 4-file split was judged too aggressive — functions like `update_dist_continuous` call `continuous_decide`, `simulate_stay`, `simulate_buy_outer`, `simulate_rent_outer`, `renter_sim`, `mortgage_matrix_solve` which were proposed for different sub-modules. The sheer number of internal cross-references makes a 4-way split error-prone.
 
-1. `model/simulation/transitions.py` -- `simulate_buy`, `simulate_buy_ret`, `simulate_rent`, `simulate_rent_ret`, `simulate_stay`, `simulate_stay_ret`, `simulate_rent_outer`, `simulate_buy_outer`
-2. `model/simulation/decisions.py` -- `continuous_decide`, `continuous_decide_renter`, `renter_sim`, `renter_sim_demand`, `renter_solve`, `compute_p_left`
-3. `model/simulation/excess_demand.py` -- `excess_demand_continuous`
-4. `model/simulation/distribution.py` -- `stat_dist_finder`, `update_dist_continuous`, `construct_m1`, `mortgage_matrix_solve`
+**Revised split (2 files):**
 
-Update all internal imports. Create shim at old `simulation.py` location.
+1. `model/simulation/core.py` -- **Public API functions** called by equilibrium/welfare:
+   - `stat_dist_finder`, `excess_demand_continuous`, `update_dist_continuous`
 
-Update `model/simulation/__init__.py` to re-export key functions.
+2. `model/simulation/helpers.py` -- **Private helper functions** called only by core.py:
+   - `simulate_buy`, `simulate_buy_ret`, `simulate_rent`, `simulate_rent_ret`, `simulate_stay`, `simulate_stay_ret`, `simulate_rent_outer`, `simulate_buy_outer`
+   - `continuous_decide`, `continuous_decide_renter`, `renter_sim`, `renter_sim_demand`, `renter_solve`, `compute_p_left`
+   - `construct_m1`, `mortgage_matrix_solve`
 
-**Test:** Run steady-state solve + `stat_dist_finder` and compare distribution output against reference.
+All functions stay `@njit`. Cross-module `@njit` calls work fine in Numba — `core.py` imports from `helpers.py`.
 
-**Commit message:** `split simulation.py into model/simulation/ sub-modules`
+Update `model/simulation/__init__.py` to re-export `stat_dist_finder`, `excess_demand_continuous`, `update_dist_continuous`.
+
+Create shim at old `simulation.py` location with deprecation comment.
+
+**Test:** Run steady-state solve + `stat_dist_finder` and compare distribution output against Phase 4 snapshot.
+
+**Commit message:** `split simulation.py into model/simulation/core.py and helpers.py`
 
 ---
 
@@ -302,14 +321,20 @@ Once all consumers are updated, remove the backward-compatibility shims in the o
 | 1 | Package skeleton | 5 new `__init__.py` | None |
 | 2a-2g | Move leaf modules (7 steps) | 7 moves + 7 shims | Low -- no internal imports |
 | 3a | Merge grids | 2 files -> 1 | Medium -- merge logic |
-| 3b-3e | Move layer-1 modules (4 steps) | 8 moves | Low -- simple renames |
+| 3b-3e | Move layer-1 modules (4 steps) | 9 moves (mortgage files stay separate) | Low -- simple renames |
 | 4a | Move VFI orchestrator | 1 move | Low |
-| 4b | Split simulation.py | 1 file -> 4 | **High** -- largest refactor |
+| 4b | Split simulation.py into 2 files | 1 file -> 2 (core + helpers) | **High** -- largest refactor |
 | 5a | Split equilibrium.py | 1 file -> 3 | Medium |
 | 5b-5c | Move analysis modules | 2 moves | Low |
 | 6a-6c | Entry points | 3 files | Low |
-| 7 | Remove shims | ~15 deletions | Low |
+| 7 | Remove shims (~15 files) | ~15 deletions | Medium -- must verify all consumers updated |
 | 8 | Final validation | 0 | None |
 
 **Total commits:** ~20 atomic commits
-**Highest risk step:** 4b (simulation.py split) -- recommend extra caution and intermediate testing
+**Highest risk step:** 4b (simulation.py split) -- reduced from 4 to 2 files per human review
+**Key decisions from review:**
+- Shims have deprecation comments to prevent becoming permanent
+- simulation.py → 2 files (not 4): public API + private helpers
+- Mortgage files stay separate (different fastmath settings)
+- net_income → utility.py (not standalone income.py)
+- config.py creation follows task_queue.md 5c.1

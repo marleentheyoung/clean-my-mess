@@ -107,7 +107,7 @@ These touch active code (renaming, interface changes) so they require the test s
 | 5b.6 | **Add numerical guards to interpolation.** | DONE | refactorer | 5b.1 | 15/15 tests pass. 4 division guards added. | Added max(denom, 1e-15) to all nom/denom in interp.py. Commit b86982a. |
 | 5b.7 | **Rename `proper_welfare_debug.py` → `welfare.py`.** | DONE | refactorer | 4.B | All imports updated in source + tests. | Updated 1 import in solve.py + test files. Commit 9b79747. |
 | 5b.8 | **Remove `_epsilons` suffix from 6 files.** | DONE | refactorer | 5b.2, 5b.7 | 15/15 tests pass. Zero old references remain. | Renamed par_epsilons→par, utility_epsilons→utility, buyer_problem_epsilons→buyer_problem, household_problem_epsilons_nolearning→household_problem, solve_epsilons→solve, LoM_epsilons→lom. ~25 imports updated. Commit d63a0e8. |
-| 5b.R | **Cartographer refreshes codebase_map.md and dependency_graph.json** | TODO | cartographer | 5b.8 | Artifacts match current code state | -- |
+| 5b.R | **Cartographer refreshes codebase_map.md and dependency_graph.json** | DONE | cartographer | 5b.8 | 25 files, 6221 lines, 73 edges, 7 layers. All renames reflected. | Commit 8f991ea |
 | 5b.G | **GATE 5: Human reviews progress before large refactors** | TODO | human | 5b.R | Approves proceeding to Phase 5c | -- |
 
 ---
