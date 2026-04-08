@@ -15,7 +15,8 @@ Designed for: macro/finance model code, data pipelines, numerical optimization, 
 │                  PHASE 1 — INTAKE                        │
 │                                                          │
 │  Human provides context.md                               │
-│  (model description, architecture, known problems)       │
+│  (model description, architecture, known problems,       │
+│   experiential context interview)                        │
 │         │                                                │
 │         ▼                                                │
 │  Cartographer [blue, sonnet]                             │
@@ -31,48 +32,84 @@ Designed for: macro/finance model code, data pipelines, numerical optimization, 
 │    artifacts/fix_proposals.md       (effort-tiered)      │
 │    artifacts/task_queue.md          (progress tracker)   │
 │                                                          │
+│  ══════════════════════════════════════════════════       │
+│  ║  GATE 1: Human reviews fix_proposals.md       ║      │
+│  ║  Marks each proposal: approved / modified /    ║      │
+│  ║  rejected. Confirms dead code is truly dead.   ║      │
+│  ══════════════════════════════════════════════════       │
+│                                                          │
 │  Status: DONE                                            │
 └──────────────────────────┬───────────────────────────────┘
                            │
-                           ▼
+              ┌────────────┴────────────┐
+              ▼                         ▼
+┌─────────────────────────┐  ┌─────────────────────────────┐
+│   PHASE 2 — PLAN        │  │  PHASE 3 — SAFE CLEANUP     │
+│   (can run in parallel) │  │  (surely-safe changes only)  │
+│                         │  │                              │
+│  Architect [cyan,sonnet]│  │  Refactorer [red, opus]      │
+│  Inputs: artifacts +    │  │  Inputs: task_queue.md       │
+│    context.md           │  │                              │
+│  Outputs:               │  │  Only tasks that remove      │
+│   proposed_structure.md │  │  dead/unreachable code:      │
+│   migration_plan.md     │  │   - Delete duplicate files   │
+│   naming_conventions.md │  │   - Remove commented blocks  │
+│   config_extraction.md  │  │   - Remove triple-quote      │
+│                         │  │     block comments           │
+│  ════════════════════   │  │   - Fix duplicate imports    │
+│  ║ GATE 2: Human     ║  │  │   - Fix cosmetic typos      │
+│  ║ reviews migration ║  │  │   - Delete unused functions  │
+│  ║ plan. Only blocks ║  │  │                              │
+│  ║ Phase 5c (large   ║  │  │  Each task includes syntax   │
+│  ║ refactors).       ║  │  │  check: python -c "import    │
+│  ════════════════════   │  │  <module>" after every edit.  │
+│                         │  │                              │
+│  Status: TODO           │  │  Rule: changes must have     │
+│                         │  │  ZERO chance of affecting     │
+│  Status: TODO           │  │  runtime behavior. If in     │
+│                         │  │  doubt, wait for Phase 4.    │
+└─────────────────────────┘  │                              │
+                              │  ════════════════════════    │
+                              │  ║ GATE 3: Human runs    ║  │
+                              │  ║ solve_ss w/ reduced   ║  │
+                              │  ║ grids (iXin:3,        ║  │
+                              │  ║ iNumStates:3). ~5 min.║  │
+                              │  ║ Confirm output same.  ║  │
+                              │  ════════════════════════    │
+                              │                              │
+                              │  Status: TODO                │
+                              └──────────────┬───────────────┘
+                                             │
+                                             ▼
 ┌──────────────────────────────────────────────────────────┐
-│                  PHASE 2 — PLAN                          │
-│                                                          │
-│  Architect [cyan, sonnet]                                │
-│  Tools:  Read, Glob, Grep, Write                         │
-│  Inputs: all cartographer artifacts + context.md         │
-│  Outputs:                                                │
-│    artifacts/proposed_structure.md   (target layout)     │
-│    artifacts/migration_plan.md      (ordered checklist)  │
-│    artifacts/naming_conventions.md  (naming rules)       │
-│    artifacts/config_extraction.md   (magic numbers)      │
-│                                                          │
-│  ══════════════════════════════════════════════════       │
-│  ║  GATE: Human reviews migration_plan.md        ║      │
-│  ║  Marks each item: approved / modified / reject ║      │
-│  ══════════════════════════════════════════════════       │
-│                                                          │
-│  Status: TODO                                            │
-└──────────────────────────┬───────────────────────────────┘
-                           │
-                           ▼
-┌──────────────────────────────────────────────────────────┐
-│                  PHASE 3 — PIN                           │
+│                  PHASE 4 — PIN                           │
 │                                                          │
 │  Test-Writer [green, sonnet]                             │
 │  Tools:  Read, Glob, Grep, Bash, Write, Edit             │
-│  Inputs: entry_points.md + intake.md + unmodified code   │
-│  Outputs:                                                │
-│    tests/conftest.py                (fixtures, seeds)    │
-│    tests/test_regression.py         (pinned outputs)     │
-│    tests/test_fast.py               (quick subset)       │
-│    tests/snapshots/                 (reference values)   │
+│  Inputs: entry_points.md + context.md + post-cleanup code│
+│  (Phase 3 only removed dead code; numerics identical)    │
 │                                                          │
-│  Pins: vCoeff_C, vCoeff_NC, homeownership rate,         │
-│        median net worth (match to 6 decimal places)      │
+│  Staged test suite (fast → slow):                        │
+│                                                          │
+│  Stage A — Smoke tests (< 30s):                          │
+│    tests/conftest.py       (session fixture, Numba init) │
+│    tests/test_smoke.py     (imports, grids, par_dict)    │
+│                                                          │
+│  Stage B — VFI checks (~5 min, reduced grids):           │
+│    tests/test_vfi.py       (solve_ss, stat_dist_finder)  │
+│    tests/snapshots/*.npz   (reference arrays)            │
+│                                                          │
+│  Stage C — Regression (~15 min):                         │
+│    tests/test_regression.py (welfare equivalents,        │
+│                              hardcoded coefficients)     │
+│                                                          │
+│  Stage D — DEFERRED (hours, blocked):                    │
+│    Full equilibrium pinning (vCoeff, homeownership,      │
+│    median net worth). Blocked until calibration path     │
+│    is fixed.                                             │
 │                                                          │
 │  ══════════════════════════════════════════════════       │
-│  ║  GATE: All tests pass on unmodified codebase  ║      │
+│  ║  GATE 4: Stages A-C pass on post-cleanup code ║      │
 │  ══════════════════════════════════════════════════       │
 │                                                          │
 │  Status: TODO                                            │
@@ -80,7 +117,7 @@ Designed for: macro/finance model code, data pipelines, numerical optimization, 
                            │
                            ▼
 ┌──────────────────────────────────────────────────────────┐
-│              PHASE 4 — CLEAN (iterative)                 │
+│              PHASE 5 — CLEAN (iterative)                 │
 │                                                          │
 │  Refactorer [red, opus]                                  │
 │  Tools:  Read, Glob, Grep, Bash, Write, Edit             │
@@ -94,16 +131,23 @@ Designed for: macro/finance model code, data pipelines, numerical optimization, 
 │  │  1. Mark task IN_PROGRESS                       │      │
 │  │  2. Make one atomic change                      │      │
 │  │  3. Run test suite                              │      │
-│  │  4a. Tests pass → commit, mark DONE             │      │
-│  │  4b. Tests fail → revert, flag for human        │      │
+│  │  4a. Pass → commit, mark DONE                   │      │
+│  │  4b. Fail → revert, mark BLOCKED,               │      │
+│  │      log failure details, wait for human        │      │
 │  │                                                 │      │
-│  │  Phase 4a: Quick wins     (tasks 2.1–2.9)      │      │
-│  │  Phase 4b: Medium effort  (tasks 3.1–3.8)      │      │
-│  │  Phase 4c: Large refactor (tasks 4.1–4.2)      │      │
+│  │  Phase 5a: Remaining quick wins (need tests)    │      │
+│  │  Phase 5b: Medium effort                        │      │
+│  │  ──── GATE 5: Human reviews progress ────       │      │
+│  │  Phase 5c: Large refactors                      │      │
 │  └────────────────────────────────────────────────┘      │
 │                                                          │
+│  After Phase 5b completes:                               │
+│  → Cartographer refreshes codebase_map.md and            │
+│    dependency_graph.json from current code state          │
+│                                                          │
 │  ══════════════════════════════════════════════════       │
-│  ║  GATE: Full test suite passes after each step ║      │
+│  ║  GATE: Tests pass after each step.            ║      │
+│  ║  BLOCKED tasks need human review before retry.║      │
 │  ══════════════════════════════════════════════════       │
 │                                                          │
 │  Status: TODO                                            │
@@ -111,13 +155,17 @@ Designed for: macro/finance model code, data pipelines, numerical optimization, 
                            │
                            ▼
 ┌──────────────────────────────────────────────────────────┐
-│                  PHASE 5 — VALIDATE                      │
+│                  PHASE 6 — VALIDATE                      │
 │                                                          │
 │  Run full regression suite on cleaned codebase.          │
-│  Compare all pinned values to Phase 3 snapshots.         │
+│  Compare all pinned values to Phase 4 snapshots.         │
+│  Verify all @njit functions compile (import all modules).│
+│                                                          │
+│  Cartographer refreshes all artifacts from final code.   │
 │                                                          │
 │  ══════════════════════════════════════════════════       │
-│  ║  GATE: Zero numerical drift                   ║      │
+│  ║  GATE 6: Zero numerical drift + all artifacts ║      │
+│  ║  consistent with current code                 ║      │
 │  ══════════════════════════════════════════════════       │
 │                                                          │
 │  Status: TODO                                            │
@@ -125,7 +173,7 @@ Designed for: macro/finance model code, data pipelines, numerical optimization, 
                            │
                            ▼
 ┌──────────────────────────────────────────────────────────┐
-│                  PHASE 6 — DOCUMENT                      │
+│                  PHASE 7 — DOCUMENT                      │
 │                                                          │
 │  Doc-Writer [yellow, sonnet]                             │
 │  Tools:  Read, Glob, Grep, Write, Edit                   │
@@ -133,7 +181,7 @@ Designed for: macro/finance model code, data pipelines, numerical optimization, 
 │  Outputs:                                                │
 │    README.md                        (project overview)   │
 │    docs/pipeline.md                 (execution order)    │
-│    docs/model.md                    (equations ↔ code)   │
+│    docs/model.md                    (equations <> code)  │
 │    Docstrings on all public functions (Google style)     │
 │    Inline comments on non-obvious numerical logic        │
 │                                                          │
@@ -146,22 +194,46 @@ Designed for: macro/finance model code, data pipelines, numerical optimization, 
 ## Hard Rules
 
 1. **@njit stays.** Never remove `@njit` from any function. All refactoring works within numba's type system. No dataclasses, `**kwargs`, or wrapper layers in the `@njit` call chain. (Tested: removing @njit from orchestration functions causes performance regression.)
-2. **Numerical identity.** Every change is validated against pinned regression tests. `vCoeff_C`, `vCoeff_NC`, homeownership rate, and median net worth must match to 6 decimal places.
-3. **Atomic commits.** Each refactoring step is one commit. If tests fail, revert. No multi-step changes without intermediate validation.
-4. **Human gates.** The migration plan requires explicit human approval before code changes begin. Dead code deletion requires human confirmation.
+2. **Numerical identity.** Every change in Phase 5+ is validated against pinned regression tests. `vCoeff_C`, `vCoeff_NC`, homeownership rate, and median net worth must match to 6 decimal places.
+3. **Atomic commits.** Each refactoring step is one commit. If tests fail, revert and mark BLOCKED. No multi-step changes without intermediate validation.
+4. **Human gates.** Six gates in the pipeline (see flowchart). No phase proceeds past a gate without human approval. Dead code deletion requires human confirmation.
 5. **task_queue.md is the source of truth.** Agents read their next task from it, mark progress in it, and log completion summaries in it.
+6. **Surely-safe before tests.** Phase 3 (safe cleanup) runs before Phase 4 (pin tests). Only changes with zero chance of affecting runtime behavior are allowed pre-tests: removing dead code, comments, unreachable files, and cosmetic fixes. If there is any doubt, the task waits for Phase 5.
+7. **Git strategy.** All work happens on `main` with atomic commits. Each commit message references the task_queue task ID (e.g., `[3.1] Delete extensionless simulation duplicate`). Commits are individually revertible.
+8. **Artifact freshness.** Cartographer refreshes `codebase_map.md` and `dependency_graph.json` after Phase 5b (medium effort) and again in Phase 6 (validate). Stale artifacts are marked with a warning header until refreshed.
+
+---
+
+## Escalation: When a Task Fails
+
+```
+Refactorer makes change → tests fail → revert change
+  │
+  ▼
+Mark task BLOCKED in task_queue.md with:
+  - Which test(s) failed
+  - What numerical drift occurred (if any)
+  - What the change was attempting
+  │
+  ▼
+Human reviews the BLOCKED task and decides:
+  a) Modify the approach and re-assign to refactorer
+  b) Split into smaller sub-tasks
+  c) Reject the task (mark REJECTED with reason)
+  d) Accept the drift and update test baselines (rare, requires justification)
+```
 
 ---
 
 ## Agents
 
-| Agent | Color | Model | Purpose | Phase |
-|-------|-------|-------|---------|-------|
-| **cartographer** | blue | sonnet | Read-only codebase exploration and mapping | 1 |
+| Agent | Color | Model | Purpose | Phases |
+|-------|-------|-------|---------|--------|
+| **cartographer** | blue | sonnet | Read-only codebase exploration and mapping | 1, 5 (refresh), 6 (refresh) |
 | **architect** | cyan | sonnet | Design target structure and migration plan | 2 |
-| **test-writer** | green | sonnet | Pin current numerical behavior | 3 |
-| **refactorer** | red | opus | Execute approved changes, one at a time | 4 |
-| **doc-writer** | yellow | sonnet | Add documentation after cleanup | 6 |
+| **test-writer** | green | sonnet | Pin current numerical behavior | 4 |
+| **refactorer** | red | opus | Execute approved changes, one at a time | 3, 5 |
+| **doc-writer** | yellow | sonnet | Add documentation after cleanup | 7 |
 
 ---
 
@@ -172,9 +244,10 @@ Designed for: macro/finance model code, data pipelines, numerical optimization, 
 | `/intake` | -- | Collect human context, save to `artifacts/intake.md` |
 | `/map` | cartographer | Produce dependency graph, codebase map, dead code, red flags |
 | `/plan` | architect | Propose target structure and migration checklist |
-| `/pin` | test-writer | Create regression test suite, verify on unmodified code |
+| `/pin` | test-writer | Create regression test suite, verify on post-cleanup code |
 | `/clean $ARGS` | refactorer | Execute task(s) from task_queue.md. `$ARGS`: task number, phase, or `all` |
 | `/validate` | -- | Run full test suite, report pass/fail with diffs |
+| `/refresh` | cartographer | Update codebase_map.md and dependency_graph.json from current code |
 | `/document` | doc-writer | Add docstrings, README, model docs |
 | `/status` | -- | Show pipeline progress from task_queue.md |
 
@@ -187,8 +260,8 @@ All pipeline outputs go to `artifacts/` to keep them separate from the project c
 ```
 artifacts/
 ├── intake.md                 ← project context and landmines
-├── codebase_map.md           ← file-by-file inventory
-├── dependency_graph.json     ← import graph with layers
+├── codebase_map.md           ← file-by-file inventory (refreshed after Phase 5b, 6)
+├── dependency_graph.json     ← import graph with layers (refreshed after Phase 5b, 6)
 ├── entry_points.md           ← call chains from each entry point
 ├── dead_code.md              ← unreachable code inventory
 ├── red_flags.md              ← issues ranked by severity
@@ -209,4 +282,5 @@ artifacts/
 - **Path-dependent execution:** Some research code relies on being run from a specific directory. Refactorer must standardize to project-root-relative paths.
 - **Fragile solver convergence:** Reordering operations or changing float precision can break convergence. Refactorer only touches structure (names, file locations), never the numerics.
 - **Dead code that isn't dead:** Cartographer flags it, but only the human confirms deletion. Some "unused" functions are called via string dispatch or config-driven execution.
-- **Numba recompilation:** Moving @njit functions between files triggers recompilation. Verify numba can still compile all functions after each move.
+- **Numba recompilation:** Moving @njit functions between files triggers recompilation. Verify numba can still compile all functions after each move. After Phase 5c (large refactors), explicitly import all modules and verify no compilation errors.
+- **Stale artifacts:** After code changes, `codebase_map.md` and `dependency_graph.json` may not match the code. Cartographer refreshes these at defined points. Between refreshes, treat artifacts as approximate.

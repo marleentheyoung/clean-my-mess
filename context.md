@@ -169,22 +169,28 @@ Fill in answers below each question. Leave `TODO` for questions you're unsure ab
 <!-- agents: test-writer, refactorer -->
 
 - **How long does a full model run take (steady state + transition)?**
-  TODO
+  Very long: it depends what is meant with full model. The simpler version of the value function iteration is called solve_ss and given an input for prices (which are the dCoeff_C and dCoeff_NC inputs) gives a solution within a few minutes. It can be speeded up further by adjusting the size of the 'g' grid to 3 points or even 1 point (although 1 point might lead to errors in the simulation file which calls the value functions later on).
+
+  Then, the stat_dist_finder function which finds the steady state distribution (again given prices) should again not take more than a few minutes. Again reducing the size of the g grid to 3 points (and possibly also reducing the size of the e grid to 3 points) will help to make it even faster.
+
+  In the equilibrium file, there are two key solvers. The initialise_coefficients_ss function, which finds equilibrium prices in the initial steady state (or terminal steady state, if initial=False), takes between 15 and 60 minutes, depending on the quality of the initial guess. With the current parameters, the guess vCoeff_C_initial and vCoeff_NC_initial is very good. The find_coefficients function, which finds the full path of equilibrium prices over the transition path of the model, takes long - several hours at least. It makes sense not too test these outer functions too often. 
+
+  As a general rule, I would first optimise the 'inner' functions that are called by the household_problem_epsilons_nolearning script and check that nothing changes in the output. Then, optimise the functions called in the 'simulation' file, and only in a few final iterations work on the equilibrium file and other files which call objects generated in the simulation file.
 
 - **How long does Numba first-compilation take?**
-  TODO
+  A few minutes
 
 - **What's the approximate memory footprint of a full solve?**
   TODO
 
 - **Any known performance bottlenecks beyond the equilibrium iteration loop?**
-  TODO
+  No
 
 - **How many equilibrium iterations does convergence typically require?**
-  TODO
+  It should take 10 to 15 at most. 
 
 - **Does the model run on a laptop, or does it need a cluster/server?**
-  TODO
+  It can run on a laptop.
 
 ---
 
@@ -192,22 +198,22 @@ Fill in answers below each question. Leave `TODO` for questions you're unsure ab
 <!-- agents: test-writer, refactorer, cartographer -->
 
 - **Known parameter ranges that cause convergence failure?**
-  TODO
+  For most parameters, you should not try values that go very far away from those that are encoded in the parameter file now. Especially changing the dBeta value is sensitive because it will change the distribution over savings, and may lead to maximum savings values that are actually beyond the current grid limits, in which case you get errors.
 
 - **Has the model ever produced NaN/Inf during normal runs? If so, where?**
-  TODO
+  Usually it will error once you get to NaN/Inf values.
 
 - **Any known sensitivity to grid density (e.g., does reducing `iBmax` from 27 to 15 break convergence)?**
-  TODO
+  Yes iBmax is actually a key grid limit which breaks convergence if it's set too low. 
 
 - **Does the equilibrium solver always converge, or does it sometimes fail? What happens when it fails?**
-  TODO
+  Convergence is pretty fragile. Changing parameters by much without adjusting grids can easily cause it to fail.
 
 - **Are there specific time periods (early vs late in the 52-period transition) where the solver is more fragile?**
-  TODO
+  I would suspect it's more fragile later on.
 
 - **Is the secant method or the bisection fallback used more often in practice?**
-  TODO
+  In practice, the secant method should be used for the great majority of iterations. The bisection method is very slow, and if it repeatedly goes to bisection it's usually better to stop the model run.
 
 ---
 
@@ -215,27 +221,26 @@ Fill in answers below each question. Leave `TODO` for questions you're unsure ab
 <!-- agents: test-writer -->
 
 - **What reference outputs exist? (saved coefficient files, known vCoeff_C/vCoeff_NC values, Excel outputs, figures)**
-  TODO
+  See below
 
 - **Can the model be run in a "fast" mode? (fewer grid points, fewer iterations, single time period)**
-  TODO
+  Yes, as I alluded to above - use the solve_ss in the household_epsilons_nolearning file, and reduce the size of the g grid (by setting iXin:3) as well as the e grid (by setting iNumStates:3). These grid size reductions should probably be used everywhere, except when you test the equilibrium functions (since too small grids can hinder convergence)
 
 - **Are there intermediate checkpoints worth pinning? (e.g., steady-state prices before transition, grid creation output, single VFI step)**
-  TODO
+  Yes - the solutions from the VFI that come from the household_problem_epsilons_nolearning file and the stationary distribution that comes out of the stat_dist function
 
 - **Which entry paths actually work right now?**
-  - `solve_epsilons.py:main()` → TODO (works / broken / partially working?)
-  - `full_calibration.py:main()` → Broken (calls nonexistent `initialise_coefficients_initial` and `solve_initial`)
-  - `experiments.py` → TODO
+  Not too much.
 
 - **Is there any seed-dependent behavior? (random number generation, stochastic shocks)**
-  TODO
+  No - the output should be the same always.
 
 - **What does "correct" output look like? (describe what a successful run produces)**
-  TODO
+  The successful run finds the equilibrium prices in the steady state (using initialise_coefficients_ss) and the equilibrium price paths (using find_coefficients).
+  Then, using these prices, we can iterate the model forwards and analyse how the distribution evolves using the stat_dist and update_dist functions.
 
 - **How do you currently verify that the model is working correctly after a change?**
-  TODO
+  I check visually that nothing in the steady state distribution has changed by plotting the output from the stat_dist function.
 
 ---
 
@@ -243,22 +248,32 @@ Fill in answers below each question. Leave `TODO` for questions you're unsure ab
 <!-- agents: test-writer, architect, refactorer -->
 
 - **Where did the hardcoded vCoeff_C/vCoeff_NC values in `solve_epsilons.py` come from?**
-  TODO (e.g., "from a calibration run on [date]", "copied from a previous version", "manually tuned")
+  They should be converged values of the equilibrium file. To be precise:
+  vCoeff_C initial and vCoeff_NC_initial should come from running the initialise_coefficients_ss function. 
+  vCoeff_C initial_RE and vCoeff_NC_initial_RE should come from running the initialise_coefficients_ss function with sceptics=False. 
+` (Unfortunately, I forgot to save vCoeff_C initial_RE and vCoeff_NC_initial_RE  in the solve_epsilons file)
+  vCoeff_C_terminal_RE and vCoeff_NC_terminal_RE come from running the initialise_coefficients_ss function with initial=False and sceptics=False
+  vCoeff_C_terminal_HE and vCoeff_NC_terminal_HE come from running the initialise_coefficients_ss function with initial=False and sceptics=True
 
+  vCoeff_C and vCoeff_NC comes from the function find_coefficients with sceptics=True. Here, for the dP_C_initial and the dP_NC_initial inputs, use the first entry of the vCoeff_C_initial and the vCoeff_NC_initial vectors
+  vCoeff_C_RE and vCoeff_NC_RE comes from the function find_coefficients with sceptics=False. Here, for the dP_C_initial and the dP_NC_initial inputs, use the first entry of the vCoeff_C_initial_RE and the vCoeff_NC_initial_RE vectors
+
+  I realise this is a really messy, user-unfriendly way of gathering outputs and inputting them into functions. (In particular, the output from the intialise_coefficients_ss is a necessary input for the find_coefficients function, as you've seen)
+  If you can propose a better way of gathering and inputting these outputs, feel free to adjust.
 - **Are the current `par_epsilons.py` values the "final" calibration, or are they intermediate?**
-  TODO
+  They are final
 
 - **What moments is the model calibrated to match? What are the data targets?**
-  TODO (e.g., homeownership rate = 0.65, median LTV = 0.80, ...)
+  Don't worry about calibration - I will fix that myself once the rest of the code is sorted
 
 - **Is the NLOpt calibration path currently functional?**
   No — calls `equil.initialise_coefficients_initial()` and `household_problem.solve_initial()` which don't exist.
 
 - **Has the calibration ever been run to completion? What were the results?**
-  TODO
+ Yes it has, the results are stored in the par_epsilons file
 
 - **Are the 52 `vPi_S_median` flood probability values from data or assumed?**
-  TODO
+  They are more or less freely interpreted from different data sources
 
 ---
 
@@ -266,19 +281,23 @@ Fill in answers below each question. Leave `TODO` for questions you're unsure ab
 <!-- agents: doc-writer, architect -->
 
 - **What paper/project is this model for?**
-  TODO
+  A paper that can be published in an economics journal with a focus on macro and climate change
 
 - **One-paragraph economic intuition: what question does this model answer?**
-  TODO
+  The model ultimately answers the question of what the welfare cost is of rising flood risk in the housing market, 
+  given that there some households underestimate flood risk. We ultimately wish to analyse which policies reduce this welfare 
+  cost, but this is not coded up yet. The problem is (i) to solve for the value functions given a path of equilibrium prices (which is accomplished in the household_problem file)
+  and (ii) to solve for equilibrium prices (for which we need the simulation and equilibrium files)
 
 - **What are the key experiments/counterfactuals? (e.g., "full information shock" in experiments.py)**
-  TODO
+  Full information shock is a first experiment where we try to analyse the welfare consequences of all agents becoming
+  fully informed about flood risk in the year 2026 (the first period of the model is 1998)
 
 - **What policy questions does the welfare analysis address?**
-  TODO
+  Ultimately, whether mortgage lending restrictions and restrictions on new building in the coastal location help to reduce the welfare cost of rising flood risk
 
 - **Are there planned model extensions that should influence the refactoring? (e.g., adding a third region, endogenous beliefs, rental market regulation)**
-  TODO
+  No, we are not planning to make the model bigger
 
 - **Who else works with this code? (co-authors, RAs, referees wanting replication)**
   TODO
@@ -294,12 +313,16 @@ Things you've learned the hard way that aren't visible in the source code.
   TODO
 
 - **Implicit assumptions that aren't documented anywhere:**
-  - vPDF_z doesn't sum to 1 — it's conditional probabilities, not a proper PDF (element 0 is the no-damage weight, elements 1-3 are conditional on flooding)
-  - TODO: add more
+   vZ actually contains two outcomes. The first '1' input is that no flood occurs. The subsequent outputs are the damages conditional on a flood.
+   vPDF_z then contains the associated probabilities, conditional on flood or no flood. So, the first input is 1 and gives the probability of no damages (1) when no flood occurs. The next three outputs are the probabilities of damage values in vZ, conditional on a flood.
 
 - **Things that have broken in the past and what caused them:**
   - Removing @njit from orchestration functions causes measurable performance regression
-  - TODO: add more
+
+
+- **Calling conventions for price inputs:**
+  - Whenever a function takes `dCoeff_C` or `dCoeff_NC` (scalar price), pass `vCoeff_C[0]` or `vCoeff_NC[0]` (the first element of the coefficient vector). The `d` prefix means scalar.
+  - The `func` parameter controls price computation: `func=False` means "solve for market-clearing prices" (used in find_coefficients, welfare analysis). `func=True` means "use the LoM to compute prices from coefficients" (used in initialise_coefficients_ss during coefficient iteration). In most call sites, `func=False` is correct. The exception is `initialise_coefficients_ss` where `func=True` is intentional.
 
 - **Order-of-operations dependencies that aren't obvious from imports:**
   - `par_epsilons.py` line 17 mutates `vPi_S_median` at module import time — import order matters

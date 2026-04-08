@@ -51,6 +51,15 @@ On startup, read these sections of `context.md`:
 - Restructuring the model equations
 - Modifying convergence tolerances or grid bounds/density
 
+## Rename protocol
+
+When renaming files or functions:
+1. Update ALL import statements in source files (`clean_the_mess/`)
+2. Update ALL import statements in test files (`tests/`)
+3. Verify with `pytest --collect-only` (checks imports without running tests)
+4. Verify with `grep -rn "old_name" clean_the_mess/ tests/` to confirm zero remaining references
+5. Only then run the full test suite
+
 ## Critical constraint
 
 @njit must not be removed from any function. All refactoring must work within numba's type system. Do not introduce Python dataclasses, keyword arguments, or wrapper layers anywhere in the @njit call chain.

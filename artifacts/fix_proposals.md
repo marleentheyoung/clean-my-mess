@@ -167,14 +167,14 @@ Mapped to `context.md` sections. Each proposal includes a rationale explaining w
 
 ## Large Refactors (4h+, need tests first)
 
-### L1. Build regression test suite [context.md section 10]
+### L1. Build staged regression test suite [context.md section 10]
 
 | Field | Value |
 |-------|-------|
 | **Files** | New `tests/` directory |
 | **Risk** | None (additive) |
-| **Rationale** | No refactoring should happen without a way to verify numerical output hasn't changed. Pin vCoeff_C, vCoeff_NC, homeownership rate, median net worth to 6 decimal places. This is the foundation that makes all other refactoring safe. |
-| **Validation** | All tests pass on unmodified codebase. |
+| **Rationale** | No refactoring should happen without a way to verify numerical output hasn't changed. However, the full equilibrium solver takes hours and the calibration path is broken, so we cannot pin vCoeff_C/vCoeff_NC from a fresh solve. Instead, build a staged suite: Stage A (smoke tests, < 30s) pins grid creation and imports; Stage B (~5 min, reduced grids) pins solve_ss and distribution properties; Stage C (~15 min) pins welfare equivalents and hardcoded coefficient inputs. Full equilibrium pinning (Stage D) is deferred until the calibration path is repaired. |
+| **Validation** | Stages A-C pass on post-Phase-3 codebase. |
 
 ### L2. Single config source [context.md section 6]
 

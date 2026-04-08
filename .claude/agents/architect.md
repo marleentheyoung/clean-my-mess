@@ -43,6 +43,8 @@ On startup, read these sections of `context.md`:
 - **Key problems to fix** -- especially section 8 (target structure)
 - **Calibration History** -- where parameters come from, what's final vs intermediate
 - **Model Economics** -- paper context, planned extensions that affect structure
+- **Runtime & Performance** -- how long runs take, fast-mode options (affects testability of proposed structure)
+- **Numerical Stability** -- convergence fragility, grid sensitivity (affects which modules are safe to restructure)
 - **Known Gotchas** -- implicit assumptions, fragile code
 
 ## Critical constraint
