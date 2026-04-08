@@ -2,236 +2,202 @@
 
 ## Overview
 
-An agentic pipeline that takes a messy research codebase — typically accumulated over months/years of iterative development — and reorganizes it into clean, documented, reproducible code while preserving exact numerical functionality.
+An agentic pipeline that takes a messy research codebase and reorganizes it into clean, documented, reproducible code while preserving exact numerical functionality.
 
 Designed for: macro/finance model code, data pipelines, numerical optimization, econometric estimation. The kind of code where correctness is defined by output, not by a spec.
 
 ---
 
-## Human Inputs (required before pipeline starts)
+## Pipeline Flowchart
 
-Collected via `/intake` command. The human provides:
+```
+┌──────────────────────────────────────────────────────────┐
+│                  PHASE 1 — INTAKE                        │
+│                                                          │
+│  Human provides context.md                               │
+│  (model description, architecture, known problems)       │
+│         │                                                │
+│         ▼                                                │
+│  Cartographer [blue, sonnet]                             │
+│  Tools:  Read, Glob, Grep, Bash (read-only), Write      │
+│  Inputs: clean_the_mess/ + context.md                    │
+│  Outputs:                                                │
+│    artifacts/intake.md              (project context)    │
+│    artifacts/codebase_map.md        (file-by-file)       │
+│    artifacts/dependency_graph.json  (import graph)       │
+│    artifacts/entry_points.md        (call chains)        │
+│    artifacts/dead_code.md           (unreachable code)   │
+│    artifacts/red_flags.md           (issues by severity) │
+│    artifacts/fix_proposals.md       (effort-tiered)      │
+│    artifacts/task_queue.md          (progress tracker)   │
+│                                                          │
+│  Status: DONE                                            │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│                  PHASE 2 — PLAN                          │
+│                                                          │
+│  Architect [cyan, sonnet]                                │
+│  Tools:  Read, Glob, Grep, Write                         │
+│  Inputs: all cartographer artifacts + context.md         │
+│  Outputs:                                                │
+│    artifacts/proposed_structure.md   (target layout)     │
+│    artifacts/migration_plan.md      (ordered checklist)  │
+│    artifacts/naming_conventions.md  (naming rules)       │
+│    artifacts/config_extraction.md   (magic numbers)      │
+│                                                          │
+│  ══════════════════════════════════════════════════       │
+│  ║  GATE: Human reviews migration_plan.md        ║      │
+│  ║  Marks each item: approved / modified / reject ║      │
+│  ══════════════════════════════════════════════════       │
+│                                                          │
+│  Status: TODO                                            │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│                  PHASE 3 — PIN                           │
+│                                                          │
+│  Test-Writer [green, sonnet]                             │
+│  Tools:  Read, Glob, Grep, Bash, Write, Edit             │
+│  Inputs: entry_points.md + intake.md + unmodified code   │
+│  Outputs:                                                │
+│    tests/conftest.py                (fixtures, seeds)    │
+│    tests/test_regression.py         (pinned outputs)     │
+│    tests/test_fast.py               (quick subset)       │
+│    tests/snapshots/                 (reference values)   │
+│                                                          │
+│  Pins: vCoeff_C, vCoeff_NC, homeownership rate,         │
+│        median net worth (match to 6 decimal places)      │
+│                                                          │
+│  ══════════════════════════════════════════════════       │
+│  ║  GATE: All tests pass on unmodified codebase  ║      │
+│  ══════════════════════════════════════════════════       │
+│                                                          │
+│  Status: TODO                                            │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│              PHASE 4 — CLEAN (iterative)                 │
+│                                                          │
+│  Refactorer [red, opus]                                  │
+│  Tools:  Read, Glob, Grep, Bash, Write, Edit             │
+│  Inputs: approved migration_plan.md + tests/ +           │
+│          task_queue.md                                    │
+│                                                          │
+│  ┌────────────────────────────────────────────────┐      │
+│  │  For each task in task_queue.md (dependency     │      │
+│  │  order):                                        │      │
+│  │                                                 │      │
+│  │  1. Mark task IN_PROGRESS                       │      │
+│  │  2. Make one atomic change                      │      │
+│  │  3. Run test suite                              │      │
+│  │  4a. Tests pass → commit, mark DONE             │      │
+│  │  4b. Tests fail → revert, flag for human        │      │
+│  │                                                 │      │
+│  │  Phase 4a: Quick wins     (tasks 2.1–2.9)      │      │
+│  │  Phase 4b: Medium effort  (tasks 3.1–3.8)      │      │
+│  │  Phase 4c: Large refactor (tasks 4.1–4.2)      │      │
+│  └────────────────────────────────────────────────┘      │
+│                                                          │
+│  ══════════════════════════════════════════════════       │
+│  ║  GATE: Full test suite passes after each step ║      │
+│  ══════════════════════════════════════════════════       │
+│                                                          │
+│  Status: TODO                                            │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│                  PHASE 5 — VALIDATE                      │
+│                                                          │
+│  Run full regression suite on cleaned codebase.          │
+│  Compare all pinned values to Phase 3 snapshots.         │
+│                                                          │
+│  ══════════════════════════════════════════════════       │
+│  ║  GATE: Zero numerical drift                   ║      │
+│  ══════════════════════════════════════════════════       │
+│                                                          │
+│  Status: TODO                                            │
+└──────────────────────────┬───────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│                  PHASE 6 — DOCUMENT                      │
+│                                                          │
+│  Doc-Writer [yellow, sonnet]                             │
+│  Tools:  Read, Glob, Grep, Write, Edit                   │
+│  Inputs: cleaned codebase + all artifacts + context.md   │
+│  Outputs:                                                │
+│    README.md                        (project overview)   │
+│    docs/pipeline.md                 (execution order)    │
+│    docs/model.md                    (equations ↔ code)   │
+│    Docstrings on all public functions (Google style)     │
+│    Inline comments on non-obvious numerical logic        │
+│                                                          │
+│  Status: TODO                                            │
+└──────────────────────────────────────────────────────────┘
+```
 
-| Input | Example | Why needed |
-|---|---|---|
-| **Project description** | "Solves a heterogeneous-agent DSGE model, calibrates to EU data, produces welfare counterfactuals" | Cartographer uses this to interpret code purpose |
-| **Entry points** | `main.py`, or "run scripts 1-5 in order", or "I think `run_all.sh` works" | Needed to trace execution flow |
-| **Known outputs** | Paper tables, figures, saved `.csv`/`.npy` files, or "converges to ~4.7%" | Test-writer pins against these |
-| **Target end state** | Replication package / co-author handoff / publishable repo / personal cleanup | Shapes the architect's plan |
-| **Known landmines** (optional) | "The calibration in `calib_v2.py` is fragile", "ignore the `old/` folder" | Prevents the refactorer from breaking things or wasting time |
+---
+
+## Hard Rules
+
+1. **@njit stays.** Never remove `@njit` from any function. All refactoring works within numba's type system. No dataclasses, `**kwargs`, or wrapper layers in the `@njit` call chain. (Tested: removing @njit from orchestration functions causes performance regression.)
+2. **Numerical identity.** Every change is validated against pinned regression tests. `vCoeff_C`, `vCoeff_NC`, homeownership rate, and median net worth must match to 6 decimal places.
+3. **Atomic commits.** Each refactoring step is one commit. If tests fail, revert. No multi-step changes without intermediate validation.
+4. **Human gates.** The migration plan requires explicit human approval before code changes begin. Dead code deletion requires human confirmation.
+5. **task_queue.md is the source of truth.** Agents read their next task from it, mark progress in it, and log completion summaries in it.
 
 ---
 
 ## Agents
 
-### 1. `cartographer`
-
-**Purpose:** Understand the codebase without changing it.
-
-**Allowed tools:** Read, Glob, Grep, Bash (read-only commands only)
-
-**Inputs:** Project folder + human description + entry points
-
-**Outputs:**
-- `artifacts/dependency_graph.json` — module-level import/call graph
-- `artifacts/codebase_map.md` — plain-language summary of every file: what it does, what it depends on, what it produces
-- `artifacts/entry_points.md` — traced execution order from entry points
-- `artifacts/dead_code.md` — files/functions that appear unreachable
-- `artifacts/red_flags.md` — hardcoded paths, duplicated functions, global state, missing imports, `import *`, etc.
-
-**Key instruction:** Do not guess. If a file's purpose is unclear, say so. Flag ambiguity rather than inventing explanations.
-
----
-
-### 2. `test-writer`
-
-**Purpose:** Pin current behavior before any refactoring begins.
-
-**Allowed tools:** Read, Write, Bash
-
-**Inputs:** Cartographer outputs + entry points + known outputs from human
-
-**Outputs:**
-- `tests/` folder with regression tests
-- `tests/snapshots/` — captured numerical outputs (arrays, dataframes, scalars)
-- `tests/conftest.py` — fixtures for seed-fixing, path resolution, tolerance settings
-
-**Key instructions:**
-- Use approximate equality for floats (`np.allclose` with documented tolerances)
-- Fix random seeds where possible; flag stochastic code that can't be seeded
-- If code takes >5 min to run, create a "fast" subset that tests critical intermediate values
-- Capture file outputs (saved csvs, figures) as reference artifacts
-- Every test must pass on the current messy code before proceeding
-
-**Gate:** Pipeline does not proceed until all pinned tests pass on the unmodified codebase.
-
----
-
-### 3. `architect`
-
-**Purpose:** Design the target structure. Does not touch code.
-
-**Allowed tools:** Read only
-
-**Inputs:** Cartographer outputs + human's target end state
-
-**Outputs:**
-- `artifacts/proposed_structure.md` — target folder layout with rationale
-- `artifacts/migration_plan.md` — ordered checklist of moves, renames, merges, splits
-- `artifacts/naming_conventions.md` — proposed variable/function/module naming rules
-- `artifacts/config_extraction.md` — hardcoded values to extract into config (paths, parameters, calibration values)
-
-**Key instructions:**
-- Group by function (data loading, model, estimation, analysis, plotting), not by chronology
-- Preserve the execution order — the pipeline must still run in sequence
-- Flag files where merge vs. split is a judgment call and ask the human
-- Propose a single `config.yaml` or `params.py` for all magic numbers
-
-**Gate: Human reviews and approves the migration plan before proceeding.** This is the critical checkpoint. The human marks each proposed change as approved / modified / rejected.
-
----
-
-### 4. `refactorer`
-
-**Purpose:** Execute the approved migration plan.
-
-**Allowed tools:** Read, Write, Bash
-
-**Inputs:** Approved migration plan + test suite
-
-**Process:**
-1. Work through the migration plan in order
-2. After each file change: run the test suite
-3. If tests fail: revert and flag the change for human review
-4. Commit after each successful step (atomic commits with descriptive messages)
-
-**Scope of changes:**
-- Move/rename files and update all imports
-- Extract hardcoded values into config
-- Rename variables/functions per naming conventions
-- Extract duplicated code into shared utilities
-- Add type hints to function signatures
-- Remove confirmed dead code (cartographer-flagged + human-approved)
-- Replace `import *` with explicit imports
-- Standardize file I/O (pathlib, relative paths from project root)
-
-**Not in scope** (require human decision):
-- Algorithmic changes, even "obvious" improvements
-- Changing numerical methods or solver settings
-- Removing code the human hasn't confirmed as dead
-- Restructuring the model itself
-
----
-
-### 5. `doc-writer`
-
-**Purpose:** Document the cleaned codebase.
-
-**Allowed tools:** Read, Write
-
-**Inputs:** Cleaned codebase + cartographer map + architect plan
-
-**Outputs:**
-- Docstrings on all public functions (Google style)
-- `README.md` — project overview, setup instructions, how to run, expected outputs
-- `docs/pipeline.md` — execution order with description of each step
-- `docs/model.md` — (if applicable) model equations and their code counterparts
-- Inline comments for non-obvious numerical logic ("this is the FOC for household problem")
-
-**Key instruction:** Explain *why*, not *what*. `# iterate over agents` is useless. `# solve each agent type's Bellman equation independently before aggregating` is useful.
-
----
-
-## Skills
-
-### `dependency-mapping`
-Uses Python `ast` module to parse imports and function calls across files. Produces a structured JSON graph and a human-readable summary. Handles relative imports, `sys.path` hacks, and dynamic imports (flags them).
-
-### `numerical-validation`
-Instructions for building regression tests on numerical code:
-- Tolerances by type (scalars: `rtol=1e-6`, arrays: `np.allclose`, dataframes: column-wise comparison)
-- Seed-fixing patterns for numpy, scipy, torch
-- Handling long-running code (checkpoint intermediate values)
-- Comparing saved files (csv diff, image perceptual hash)
-
-### `research-code-patterns`
-Catalog of common research code smells and their fixes:
-- `final_v3_REAL.py` → identify the canonical version
-- Notebook cells pasted into `.py` with dead `In[47]:` markers
-- Hardcoded absolute paths (`/Users/marleen/Desktop/data/...`)
-- Copy-pasted functions across files (identify canonical, replace with imports)
-- Global mutable state used to pass config
-- `plt.show()` blocking execution in batch scripts
+| Agent | Color | Model | Purpose | Phase |
+|-------|-------|-------|---------|-------|
+| **cartographer** | blue | sonnet | Read-only codebase exploration and mapping | 1 |
+| **architect** | cyan | sonnet | Design target structure and migration plan | 2 |
+| **test-writer** | green | sonnet | Pin current numerical behavior | 3 |
+| **refactorer** | red | opus | Execute approved changes, one at a time | 4 |
+| **doc-writer** | yellow | sonnet | Add documentation after cleanup | 6 |
 
 ---
 
 ## Commands
 
-### `/intake`
-Collects human inputs. Prompts for: project description, entry points, known outputs, target end state, known landmines.
-Saves to `artifacts/intake.md`.
-
-### `/map`
-Runs the cartographer agent. Produces dependency graph and codebase map.
-
-### `/pin`
-Runs the test-writer agent. Produces regression test suite. Verifies all tests pass on current code.
-
-### `/plan`
-Runs the architect agent. Produces migration plan for human review.
-
-### `/clean $ARGUMENTS`
-Runs the refactorer on a specific file, module, or `all` for the full plan.
-Always runs tests after each change.
-
-### `/validate`
-Runs the full test suite. Reports pass/fail with diffs on any failures.
-
-### `/document`
-Runs the doc-writer agent on the cleaned codebase.
-
-### `/status`
-Shows pipeline progress: which stages are complete, which tests pass, which migration plan items are done.
+| Command | Agent | What it does |
+|---------|-------|-------------|
+| `/intake` | -- | Collect human context, save to `artifacts/intake.md` |
+| `/map` | cartographer | Produce dependency graph, codebase map, dead code, red flags |
+| `/plan` | architect | Propose target structure and migration checklist |
+| `/pin` | test-writer | Create regression test suite, verify on unmodified code |
+| `/clean $ARGS` | refactorer | Execute task(s) from task_queue.md. `$ARGS`: task number, phase, or `all` |
+| `/validate` | -- | Run full test suite, report pass/fail with diffs |
+| `/document` | doc-writer | Add docstrings, README, model docs |
+| `/status` | -- | Show pipeline progress from task_queue.md |
 
 ---
 
-## Execution Order
-
-```
-1. /intake          ← human provides context
-2. /map             ← cartographer reads everything
-3. /pin             ← test-writer captures current behavior
-   ↓
-   GATE: all pinned tests must pass
-   ↓
-4. /plan            ← architect proposes structure
-   ↓
-   GATE: human reviews and approves plan
-   ↓
-5. /clean all       ← refactorer executes (with tests after each step)
-6. /validate        ← final check: all tests still pass
-7. /document        ← doc-writer adds documentation
-```
-
----
-
-## Artifacts Directory
+## Artifacts
 
 All pipeline outputs go to `artifacts/` to keep them separate from the project code:
 
 ```
 artifacts/
-├── intake.md
-├── dependency_graph.json
-├── codebase_map.md
-├── entry_points.md
-├── dead_code.md
-├── red_flags.md
-├── proposed_structure.md
-├── migration_plan.md        ← human annotates this
-├── naming_conventions.md
-├── config_extraction.md
-└── status.md
+├── intake.md                 ← project context and landmines
+├── codebase_map.md           ← file-by-file inventory
+├── dependency_graph.json     ← import graph with layers
+├── entry_points.md           ← call chains from each entry point
+├── dead_code.md              ← unreachable code inventory
+├── red_flags.md              ← issues ranked by severity
+├── fix_proposals.md          ← effort-tiered fix proposals with rationale
+├── task_queue.md             ← SOURCE OF TRUTH for progress
+├── proposed_structure.md     ← target folder layout (Phase 2)
+├── migration_plan.md         ← ordered checklist, human-annotated (Phase 2)
+├── naming_conventions.md     ← naming rules (Phase 2)
+└── config_extraction.md      ← magic numbers to extract (Phase 2)
 ```
 
 ---
@@ -241,5 +207,6 @@ artifacts/
 - **Silent numerical drift:** Tests pass with loose tolerances but results shifted. Mitigation: pin scalar outputs with tight tolerances, arrays with `rtol=1e-6`.
 - **Import cycles after reorganization:** Moving files around can create circular imports. Refactorer must check for this after each move.
 - **Path-dependent execution:** Some research code relies on being run from a specific directory. Refactorer must standardize to project-root-relative paths.
-- **Fragile solver convergence:** Reordering operations or changing float precision can break convergence. If model code exists, refactorer only touches structure (names, file locations), never the numerics.
+- **Fragile solver convergence:** Reordering operations or changing float precision can break convergence. Refactorer only touches structure (names, file locations), never the numerics.
 - **Dead code that isn't dead:** Cartographer flags it, but only the human confirms deletion. Some "unused" functions are called via string dispatch or config-driven execution.
+- **Numba recompilation:** Moving @njit functions between files triggers recompilation. Verify numba can still compile all functions after each move.
