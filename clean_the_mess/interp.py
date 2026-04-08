@@ -53,7 +53,7 @@ def _interp_1d(grid1,value,xi1,j1):
         nom_1 = nom_1_left if k1 == 0 else nom_1_right                    
         nom += nom_1*value[j1+k1]
 
-    return nom/denom
+    return nom/max(denom, 1e-15)
 
 @njit(fastmath=True)
 def interp_1d(grid1,value,xi1):
@@ -120,7 +120,7 @@ def _interp_3d(grid1,grid2,grid3,value,xi1,xi2,xi3,j1,j2,j3):
                 nom_3 = nom_3_left if k3 == 0 else nom_3_right               
                 nom += nom_1*nom_2*nom_3*value[j1+k1,j2+k2,j3+k3]
 
-    return nom/denom
+    return nom/max(denom, 1e-15)
 
 @njit(fastmath=True)
 def interp_3d(grid1,grid2,grid3,value,xi1,xi2,xi3):
@@ -197,7 +197,7 @@ def _interp_2d(grid1,grid2,value,xi1,xi2,j1,j2):
             nom_2 = nom_2_left if k2 == 0 else nom_2_right
             nom += nom_1*nom_2*value[j1+k1,j2+k2]
 
-    return nom/denom
+    return nom/max(denom, 1e-15)
 
 @njit(fastmath=True)
 def interp_2d(grid1,grid2,value,xi1,xi2):
@@ -243,7 +243,7 @@ def _interp_4d(grid1,grid2,grid3,grid4,value,xi1,xi2,xi3,xi4,j1,j2,j3,j4):
                     nom_4 = nom_4_left if k4 == 0 else nom_4_right
                     nom += nom_1*nom_2*nom_3*nom_4*value[j1+k1,j2+k2,j3+k3,j4+k4]
 
-    return nom/denom
+    return nom/max(denom, 1e-15)
 
 @njit(fastmath=True)
 def interp_4d(grid1,grid2,grid3,grid4,value,xi1,xi2,xi3,xi4):
