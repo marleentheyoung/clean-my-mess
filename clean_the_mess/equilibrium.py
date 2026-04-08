@@ -520,21 +520,22 @@ def house_prices_algorithm(sceptics, func, method, grids, par, guess_c, guess_nc
     # Initialize
     dP_C = guess_c
     dP_NC = guess_nc
-    price_tol = 1e-3
-    error_tol = 1e-5
-    max_iterations = 15
-    
-    if method == 'secant':
-        # initial guesses:    
-        dP_C_0 = guess_c - 0.005/2
-        dP_NC_0 = guess_nc - 0.005/3  # Slightly below center
+    PRICE_TOL = 1e-3
+    ERROR_TOL = 1e-5
+    MAX_ITERATIONS = 15
+    SECANT_STEP = 0.005
 
-        dP_C_1 = guess_c + 0.005/2
-        dP_NC_1 = guess_nc - 0.005/3
+    if method == 'secant':
+        # initial guesses — triangle of perturbations around guess
+        dP_C_0 = guess_c - SECANT_STEP/2
+        dP_NC_0 = guess_nc - SECANT_STEP/3
+
+        dP_C_1 = guess_c + SECANT_STEP/2
+        dP_NC_1 = guess_nc - SECANT_STEP/3
 
         # Apex (top point)
         dP_C_2 = guess_c
-        dP_NC_2 = guess_nc + 2*0.005/3
+        dP_NC_2 = guess_nc + 2*SECANT_STEP/3
 
         dP_C, dP_NC, succes, iteration, excess_demand_C, excess_demand_NC = secant_method_system_2d(compute_excess_demand_pair, dP_C_0, dP_NC_0,dP_C_1, dP_NC_1,dP_C_2, dP_NC_2,bound_c_l, bound_nc_l,market_data)
         #if succes == True:
@@ -546,7 +547,7 @@ def house_prices_algorithm(sceptics, func, method, grids, par, guess_c, guess_nc
                 #succes=False
         if succes == False:
             print("Secant method failed")
-            for iteration in range(max_iterations):
+            for iteration in range(MAX_ITERATIONS):
                 dP_C_prev = dP_C
                 dP_NC_prev = dP_NC
                 
@@ -569,30 +570,30 @@ def house_prices_algorithm(sceptics, func, method, grids, par, guess_c, guess_nc
                 
                 # Check convergence with modular function
                 converged, price_dist, error = check_convergence(
-                    dP_C, dP_NC, dP_C_prev, dP_NC_prev, excess_C, excess_NC, price_tol, error_tol)
-            
+                    dP_C, dP_NC, dP_C_prev, dP_NC_prev, excess_C, excess_NC, PRICE_TOL, ERROR_TOL)
+
                 # print('Iteration', iteration, 'P_C=',dP_C, ', P_NC =',dP_NC, 'Error_C =' , excess_C, 'Error_NC =', excess_NC)
-                
+
                 if converged:
                     succes = True
                     break
-                    
+
                 # Update bounds for next iteration (adaptive bounds)
                 #bound_c_l_bis = max(bound_c_l_bis, dP_C - 0.1)
                 #bound_c_r_bis = min(bound_c_r_bis, dP_C + 0.1)
-                #bound_nc_l_bis = max(bound_nc_l_bis, dP_NC - 0.1) 
+                #bound_nc_l_bis = max(bound_nc_l_bis, dP_NC - 0.1)
                 #bound_nc_r_bis = min(bound_nc_r_bis, dP_NC + 0.1)
-                
+
                 # Early exit if making no progress
                 if iteration > 2 and price_dist < 5e-4:
                     # print('Early exit due to small price changes at iteration {iteration+1}')
                     break
-            
-            if iteration >= max_iterations - 1 and error > error_tol:
-                print("Market clearing failed after {max_iterations} iterations, error: {error:.2e}")
+
+            if iteration >= MAX_ITERATIONS - 1 and error > ERROR_TOL:
+                print("Market clearing failed after MAX_ITERATIONS iterations")
     
     elif method == 'bisection':
-        for iteration in range(max_iterations):
+        for iteration in range(MAX_ITERATIONS):
             dP_C_prev = dP_C
             dP_NC_prev = dP_NC
             
@@ -609,27 +610,27 @@ def house_prices_algorithm(sceptics, func, method, grids, par, guess_c, guess_nc
             
             # Check convergence with modular function
             converged, price_dist, error = check_convergence(
-                dP_C, dP_NC, dP_C_prev, dP_NC_prev, excess_C, excess_NC, price_tol, error_tol)
-        
+                dP_C, dP_NC, dP_C_prev, dP_NC_prev, excess_C, excess_NC, PRICE_TOL, ERROR_TOL)
+
             # print('Iteration', iteration, 'P_C=',dP_C, ', P_NC =',dP_NC, 'Error_C =' , excess_C, 'Error_NC =', excess_NC)
-            
+
             if converged:
                 succes = True
                 break
-                
+
             # Update bounds for next iteration (adaptive bounds)
             bound_c_l_bis = max(bound_c_l_bis, dP_C - 0.1)
             bound_c_r_bis = min(bound_c_r_bis, dP_C + 0.1)
-            bound_nc_l_bis = max(bound_nc_l_bis, dP_NC - 0.1) 
+            bound_nc_l_bis = max(bound_nc_l_bis, dP_NC - 0.1)
             bound_nc_r_bis = min(bound_nc_r_bis, dP_NC + 0.1)
-            
+
             # Early exit if making no progress
-            if iteration > 2 and price_dist < 1e-3:
+            if iteration > 2 and price_dist < PRICE_TOL:
                 # print('Early exit due to small price changes at iteration {iteration+1}')
                 break
-        
-        if iteration >= max_iterations - 1 and error > error_tol:
-            print("Market clearing failed after {max_iterations} iterations, error: {error:.2e}")
+
+        if iteration >= MAX_ITERATIONS - 1 and error > ERROR_TOL:
+            print("Market clearing failed after MAX_ITERATIONS iterations")
     
     return dP_C, dP_NC, iteration, succes
 

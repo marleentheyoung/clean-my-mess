@@ -7,12 +7,13 @@ import numpy as np
 import misc_functions as misc
 from numba import njit
 
+NEG_INF = -1e12
 
 @njit(fastmath=True)
 def solve(par, grids, curr_h_index, vX, j_index, dP, mVt_stayer, dP_lom,max_ltv,max_ltv_index,selected_values_buy):
     
     #n=len(selected_values_buy)
-    mVt = np.ones((grids.vM_sim.size))*-1e12   
+    mVt = np.ones((grids.vM_sim.size))*NEG_INF   
     mH_pol_index = np.zeros((grids.vM_sim.size),dtype=np.int64)
     mL_pol_index = np.zeros((grids.vM_sim.size),dtype=np.int64)
     mH_pol=np.zeros((grids.vM_sim.size),dtype=np.float64)

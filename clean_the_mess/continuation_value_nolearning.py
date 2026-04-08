@@ -10,6 +10,8 @@ from numba import njit
 import utility_epsilons as ut
 import interp as interp
 
+NEG_INF = -1e12
+
 @njit
 def solve_last_period_owners_C(par, grids,  vPi_S, dPi_L, k_index, dP_C_prime,mortgage_size_C, welfare):
 
@@ -184,10 +186,10 @@ def solve_owners_C(par, grids, j_index, k_index, mMarkov, vPi_S, dPi_L, coastal_
                             stayer_cih_beforem=savings-depreciation+e_prime
                             seller_cih=savings+sell_value+e_prime-mortgage_withint
                             #Initialise choices that require optimal choice of mortgage 
-                            stay_paymore  = -1e12
-                            stay_refinance = -1e12
+                            stay_paymore  = NEG_INF
+                            stay_refinance = NEG_INF
                             if min_payment > max_payment:
-                                stay = -1e12
+                                stay = NEG_INF
                             else:
                                 stay = misc.interp_2d(grids.vM, grids.vL,vt_stay_c_input[ :,h_index, :, e_prime_index],stayer_cih_beforem-min_payment, ltv_minpay)
                             
@@ -221,12 +223,12 @@ def solve_owners_C(par, grids, j_index, k_index, mMarkov, vPi_S, dPi_L, coastal_
                             if mortgage_withint>sell_value:
                                 default = -1/(-1/interp.interp_1d(grids.vX, vt_renter_input[:, e_prime_index],defaulter_cih)-par.dXi_foreclosure)
                             else:
-                                default =-1e12
+                                default =NEG_INF
                                                                                          
                             if seller_cih>0:
                                 stay_renter = interp.interp_1d(grids.vX, vt_renter_input[:, e_prime_index],seller_cih)  
                             else:
-                                stay_renter = -1e12
+                                stay_renter = NEG_INF
                             
                             buyC = interp.interp_1d(grids.vX, vt_buy_c_input[:, e_prime_index],seller_cih)
                             buyNC = interp.interp_1d(grids.vX, vt_buy_nc_input[:, e_prime_index],seller_cih)
@@ -376,12 +378,12 @@ def solve_owners_NC(par, grids, j_index, k_index, mMarkov, noncoastal_stayer_inp
                         seller_cih=savings+sell_value+e_prime-mortgage_withint
                         defaulter_cih=savings+e_prime-mortgage_rebate
                         #Initialise choices that require optimal choice of mortgage 
-                        stay_paymore  = -1e12     
-                        stay_refinance = -1e12
+                        stay_paymore  = NEG_INF     
+                        stay_refinance = NEG_INF
 
                         
                         if min_payment>max_payment:
-                            stay = -1e12
+                            stay = NEG_INF
                         else:
                             stay = misc.interp_2d(grids.vM, grids.vL, vt_stay_nc_input[ :,h_index, :, e_prime_index],stayer_cih_beforem-min_payment, ltv_minpay)
                         
@@ -415,12 +417,12 @@ def solve_owners_NC(par, grids, j_index, k_index, mMarkov, noncoastal_stayer_inp
                         if mortgage_withint>sell_value:
                             default = -1/(-1/interp.interp_1d(grids.vX, vt_renter_input[:, e_prime_index],defaulter_cih)-par.dXi_foreclosure)
                         else:
-                            default =-1e12
+                            default =NEG_INF
                                                      
                         if seller_cih>0:
                             stay_renter = interp.interp_1d(grids.vX, vt_renter_input[:, e_prime_index],seller_cih)  
                         else:
-                            stay_renter=-1e12    
+                            stay_renter=NEG_INF    
                        
                         buyC = interp.interp_1d(grids.vX, vt_buy_c_input[:, e_prime_index],seller_cih)        
                         buyNC = interp.interp_1d(grids.vX, vt_buy_nc_input[:, e_prime_index],seller_cih)

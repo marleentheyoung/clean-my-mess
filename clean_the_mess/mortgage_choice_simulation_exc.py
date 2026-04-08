@@ -4,10 +4,12 @@ import misc_functions as misc
 import interp as interp
 from numba import njit
 
+NEG_INF = -1e12
+
 @njit
 def solve(par,grids,vt_stay_input,j,h, e, dZ, dP,mortgage_start,max_ltv_cache_choice_index_left, min_payment, ltv_cache_minpay_index_left,selected_values_stay):
         
-    vt_stay=np.ones((grids.vM_sim.size))*-1e12
+    vt_stay=np.ones((grids.vM_sim.size))*NEG_INF
     #Initialise value from paying off more than the minimum and refinancing
    
 
@@ -69,7 +71,7 @@ def solve(par,grids,vt_stay_input,j,h, e, dZ, dP,mortgage_start,max_ltv_cache_ch
 @njit
 def solve_NC(par,grids,vt_stay_nc_input,j,h, e, dP_NC,mortgage_start,max_ltv_cache_choice_index_left, min_payment, ltv_cache_minpay_index_left, selected_values_stay):
         
-    vt_stay=np.ones((grids.vM_sim.size))*-1e12
+    vt_stay=np.ones((grids.vM_sim.size))*NEG_INF
     #Initialise value from paying off more than the minimum and refinancing
     if ltv_cache_minpay_index_left>max_ltv_cache_choice_index_left:
         max_ltv_cache_choice_index_left=ltv_cache_minpay_index_left

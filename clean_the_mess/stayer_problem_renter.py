@@ -8,6 +8,8 @@ import numpy as np
 from numba import njit
 import utility_epsilons as ut
 import grids as gridsfun
+
+N_CONSUMPTION_NODES = 100
 import interp as interpfun
 
                 
@@ -42,7 +44,7 @@ def solve(par, grids, j_index, k_index, g_index, t_index, dP_C, dP_NC, dP_C_prim
     vX_endog_max_index=0
     vExp_endog=np.zeros((grids.vB.size))
     c_pol_max=0.5*(grids.vX[-1]-rental_price*grids.vH_renter[0])
-    vC_nodes=gridsfun.nonlinspace_jit(0.01,c_pol_max,100,par.nonlingrid_big)
+    vC_nodes=gridsfun.nonlinspace_jit(0.01,c_pol_max,N_CONSUMPTION_NODES,par.nonlingrid_big)
     
         
     vU_c_nodes=ut.u_c(j,vC_nodes,grids.vH_renter[-1],g_renter, par)

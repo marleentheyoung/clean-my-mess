@@ -8,6 +8,8 @@ from numba import njit
 import utility_epsilons as ut
 import grids as gridsfun
 
+N_CONSUMPTION_NODES = 100
+
 @njit
 def solve(par, grids, j_index, k_index, g_index, mW_next, mQ_next, mW_next_wf, welfare):
     
@@ -20,7 +22,7 @@ def solve(par, grids, j_index, k_index, g_index, mW_next, mQ_next, mW_next_wf, w
   
     
     c_pol_max=0.5*(grids.vM[-1])
-    vC_nodes=gridsfun.nonlinspace_jit(0.01,c_pol_max,100,par.nonlingrid_big)
+    vC_nodes=gridsfun.nonlinspace_jit(0.01,c_pol_max,N_CONSUMPTION_NODES,par.nonlingrid_big)
     j=j_index
     g=grids.vG[g_index]
     vM_grid = grids.vM

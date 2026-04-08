@@ -17,6 +17,8 @@ import mortgage_choice_simulation_exc as mortgage_sim_exc
 import simulate_initial_joint as initial_joint_sim
 import tauchen as tauch
 
+NEG_INF = -1e12
+
 
    
 @njit
@@ -198,7 +200,7 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
                                     if (1+par.r_m)*mortgage_start>(1-par.dDelta-par.dKappa_sell-(1-dZ))*h*dP_C:
                                         vt_default, h_default = renter_sim_demand(True, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
                                     else:
-                                        vt_default=np.ones(grids.vM_sim.size)*-1e12
+                                        vt_default=np.ones(grids.vM_sim.size)*NEG_INF
                                         h_default=np.zeros(grids.vM_sim.size)                                     
                
                                          
@@ -239,7 +241,7 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
                                 if (1+par.r_m)*mortgage_start>(1-par.dDelta-par.dKappa_sell)*h*dP_NC:
                                     vt_default, h_default = renter_sim_demand(True, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
                                 else:
-                                    vt_default=np.ones(grids.vM_sim.size)*-1e12
+                                    vt_default=np.ones(grids.vM_sim.size)*NEG_INF
                                     h_default=np.zeros(grids.vM_sim.size)
                                 mass_stay,mass_rent,mass_buyc,mass_buync,mass_default = continuous_decide(grids,vt_stay_nc_sim, vt_buy_c, vt_buy_nc, vt_renter_sim,vt_default,mass)
                                                           
@@ -456,7 +458,7 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
                                     if (1+par.r_m)*mortgage_start>(1-par.dDelta-par.dKappa_sell-(1-dZ))*h*dP_C:
                                         vt_default = renter_sim(True, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
                                     else:
-                                        vt_default=np.ones(grids.vM_sim.size)*-1e12
+                                        vt_default=np.ones(grids.vM_sim.size)*NEG_INF
                                     mass_stay,mass_rent,mass_buyc,mass_buync,mass_default = continuous_decide(grids,vt_stay_c_sim, vt_buy_c, vt_buy_nc, vt_renter_sim,vt_default,mass)
                                     assert not (np.sum(mass_stay)+np.sum(mass_rent)+np.sum(mass_buyc)+np.sum(mass_buync)+np.sum(mass_default)-np.sum(mass))>1e-10 
                                     
@@ -514,7 +516,7 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
                                 if (1+par.r_m)*mortgage_start>(1-par.dDelta-par.dKappa_sell)*h*dP_NC:
                                     vt_default = renter_sim(True, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, grids.vM_sim+e-mortgage_rebate, mass_pos_idx)      
                                 else:
-                                    vt_default=np.ones(grids.vM_sim.size)*-1e12
+                                    vt_default=np.ones(grids.vM_sim.size)*NEG_INF
 
                                 mass_stay,mass_rent,mass_buyc,mass_buync, mass_default = continuous_decide(grids,vt_stay_nc_sim, vt_buy_c, vt_buy_nc, vt_renter_sim,vt_default, mass)
                                 assert not (np.sum(mass_stay)+np.sum(mass_rent)+np.sum(mass_buyc)+np.sum(mass_buync)+np.sum(mass_default)-np.sum(mass))>1e-10 
@@ -1124,7 +1126,7 @@ def mortgage_matrix_solve(par, grids, dP_C_lag, dP_NC_lag, dP_C, dP_NC):
 
 @njit
 def renter_sim(default, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, x_renter_vec, idx_list):    
-    vt_renter_out=np.ones((grids.vM_sim.size))*-1e12
+    vt_renter_out=np.ones((grids.vM_sim.size))*NEG_INF
     for idx in idx_list:
         x_renter=x_renter_vec[idx]
         if x_renter>max(rental_price,rental_price_lom)*grids.vH_renter[0]:
@@ -1155,13 +1157,13 @@ def renter_sim(default, initialise, par,grids,j,vt_renter_input, b_renter_input,
                 #vt_renter_out[idx]=-1/(-1/vt_renter_lom+flow_utility_mc-flow_utility_lom) 
 
         else:
-            vt_renter_out[idx]=-1e12
+            vt_renter_out[idx]=NEG_INF
 
     return vt_renter_out
 
 @njit
 def renter_sim_demand(default, initialise, par,grids,j,vt_renter_input, b_renter_input, h_share_lom,w_lom,h_share,w,rental_price,rental_price_lom, g_renter_lom, g_renter, x_renter_vec, idx_list):    
-    vt_renter_out=np.ones((grids.vM_sim.size))*-1e12
+    vt_renter_out=np.ones((grids.vM_sim.size))*NEG_INF
     h_renter_out=np.empty((grids.vM_sim.size))
     for idx in idx_list:
         x_renter=x_renter_vec[idx]
@@ -1192,7 +1194,7 @@ def renter_sim_demand(default, initialise, par,grids,j,vt_renter_input, b_renter
                 #    flow_utility_mc=ut.u(j,expenditures-rental_price*grids.vH_renter[-1],grids.vH_renter[-1],g_renter, par)  
                 #vt_renter_out[idx]=-1/(-1/vt_renter_lom+flow_utility_mc-flow_utility_lom)                 
         else:
-            vt_renter_out[idx]=-1e12
+            vt_renter_out[idx]=NEG_INF
             h_renter_out[idx]=0.
             
         if h_renter_out[idx]<0 or np.isnan(vt_renter_out[idx]):

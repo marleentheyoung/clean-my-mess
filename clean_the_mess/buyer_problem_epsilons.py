@@ -7,14 +7,16 @@ from numba import njit
 import utility_epsilons as ut
 import interp as interpfun
 
+NEG_INF = -1e12
+
 @njit
 def solve(par, grids, j_index, k_index, g_index, e_index, dP, mVt_stayer, mC_pol_stayer, mVt_stayer_wf, welfare):
     
     j=j_index
     g=grids.vG[g_index]
 
-    mVt = np.ones((grids.vX.size))*-1e12
-    mVt_wf = np.ones((grids.vX.size))*-1e12
+    mVt = np.ones((grids.vX.size))*NEG_INF
+    mVt_wf = np.ones((grids.vX.size))*NEG_INF
     mQt = np.zeros((grids.vX.size))     
     
     max_mortgage_pti=grids.mPTI[j_index,e_index] 
