@@ -23,6 +23,47 @@ NEG_INF = -1e12
    
 @njit
 def stat_dist_finder(sceptics, grids, par, mMarkov, iNj, vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, vCoeff_in_C,vCoeff_in_NC, bequest_guess, initial):
+   """Find the stationary wealth distribution at given prices.
+
+   Iterates the forward distribution update over the full lifecycle (iNj
+   periods) until bequests converge, so that the distribution is consistent
+   with the bequest motive. Convergence is checked on the bequest aggregates
+   (coastal housing, non-coastal housing, savings) across outer iterations.
+
+   Args:
+       sceptics: If True, include both belief types.
+       grids: Numba jitclass with model grids.
+       par: Numba jitclass with model parameters.
+       mMarkov: 2D array, income Markov transition matrix.
+       iNj: Number of lifecycle periods.
+       vt_stay_c: Coastal stayer policy values, shape (J, K, G, M, H, L, E).
+       vt_stay_nc: Non-coastal stayer policy values, same shape.
+       vt_renter: Renter policy values, shape (J, K, G, X, E).
+       b_stay_c: Coastal stayer savings policy.
+       b_stay_nc: Non-coastal stayer savings policy.
+       b_renter: Renter savings policy.
+       vCoeff_in_C: 1D array (5,), coastal price LoM coefficients.
+       vCoeff_in_NC: 1D array (5,), non-coastal price LoM coefficients.
+       bequest_guess: 1D array (3,), initial guess for (coastal_beq, noncoastal_beq, savings_beq).
+       initial: If True, use t=0 prices. If False, use terminal prices.
+
+   Returns:
+       mDist1_c: Coastal owner distribution, shape (J, K, G, M_sim, H, L_sim, E).
+       mDist1_nc: Non-coastal owner distribution, same shape.
+       mDist1_renter: Renter distribution, shape (J, K, G, X_sim, E).
+       rental_stock_C_out: Total coastal rental housing stock demanded.
+       rental_stock_NC_out: Total non-coastal rental housing stock demanded.
+       coastal_beq: Converged coastal housing bequest per dying agent.
+       noncoastal_beq: Converged non-coastal housing bequest per dying agent.
+       savings_beq: Converged financial savings bequest per dying agent.
+       vcoastal_beq: Bequest convergence history (coastal).
+       vnoncoastal_beq: Bequest convergence history (non-coastal).
+       vsavings_beq: Bequest convergence history (savings).
+       no_beq: Number of agents dying with no bequest.
+       coastal_mass_J: Mass of coastal owners at terminal age, by belief type.
+       noncoastal_mass_J: Mass of non-coastal owners at terminal age, by belief type.
+       renter_mass_J: Mass of renters at terminal age, by belief type.
+   """
 
    if initial==True:
        t_index=0
@@ -94,7 +135,59 @@ def stat_dist_finder(sceptics, grids, par, mMarkov, iNj, vt_stay_c, vt_stay_nc, 
   
 @njit
 def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_index, mMarkov, iNj, mDist0_c, mDist0_nc, mDist0_renter, dP_C, dP_NC, vt_stay_c, vt_stay_nc,  vt_renter, b_stay_c, b_stay_nc, b_renter,  coastal_beq, noncoastal_beq, savings_beq,vCoeff_in_C,vCoeff_in_NC, dP_C_lag, dP_NC_lag):
-    
+    """Advance the wealth distribution one period forward using policy functions.
+
+    Given the current distribution of agents across states and their optimal
+    policies, computes the next-period distribution by applying housing decisions
+    (stay, sell, buy, rent, default), income transitions, and mortality/bequest
+    transfers. Handles newborn entry with bequests from dying agents.
+
+    Args:
+        sceptics: If True, include both belief types.
+        stationary: If True, reuse distribution arrays in-place (steady-state iteration).
+            If False, allocate fresh arrays (transition-path simulation).
+        it: Current lifecycle age index within the forward sweep.
+        initialise: If True, use LoM-implied prices for the distribution update
+            (func=True convention). If False, use market-clearing prices.
+        grids: Numba jitclass with model grids.
+        par: Numba jitclass with model parameters.
+        t_index: Time period index.
+        mMarkov: 2D array, income Markov transition matrix.
+        iNj: Number of lifecycle periods.
+        mDist0_c: Current coastal owner distribution.
+        mDist0_nc: Current non-coastal owner distribution.
+        mDist0_renter: Current renter distribution.
+        dP_C: Coastal house price (scalar, market-clearing or LoM).
+        dP_NC: Non-coastal house price (scalar).
+        vt_stay_c: Coastal stayer policy values at time t_index.
+        vt_stay_nc: Non-coastal stayer policy values at time t_index.
+        vt_renter: Renter policy values at time t_index.
+        b_stay_c: Coastal stayer savings policy at time t_index.
+        b_stay_nc: Non-coastal stayer savings policy at time t_index.
+        b_renter: Renter savings policy at time t_index.
+        coastal_beq: Coastal housing bequest from previous period.
+        noncoastal_beq: Non-coastal housing bequest from previous period.
+        savings_beq: Savings bequest from previous period.
+        vCoeff_in_C: 1D array (5,), coastal LoM coefficients (for price growth).
+        vCoeff_in_NC: 1D array (5,), non-coastal LoM coefficients.
+        dP_C_lag: Lagged coastal price (for computing price growth).
+        dP_NC_lag: Lagged non-coastal price.
+
+    Returns:
+        mDist1_c: Updated coastal owner distribution.
+        mDist1_nc: Updated non-coastal owner distribution.
+        mDist1_renter: Updated renter distribution.
+        stock_demand_rental_C: Coastal rental stock demanded this period.
+        stock_demand_rental_NC: Non-coastal rental stock demanded.
+        coastal_beq: Coastal housing bequest from dying agents.
+        noncoastal_beq: Non-coastal housing bequest from dying agents.
+        savings_beq: Savings bequest from dying agents.
+        no_beq: Count of agents with no bequest.
+        coastal_mass_J: Terminal-age coastal owner mass by belief type.
+        noncoastal_mass_J: Terminal-age non-coastal owner mass by belief type.
+        renter_mass_J: Terminal-age renter mass by belief type.
+    """
+
     default_mass_rational=0
     default_mass_sceptic=0
     stock_demand_rental_C=0.0
@@ -905,26 +998,7 @@ def renter_sim(default, initialise, par,grids,j,vt_renter_input, b_renter_input,
             else:
                 utility_penalty=0
             vt_renter_lom=-1/(-1/interp.interp_1d(grids.vX,vt_renter_input, x_renter) -utility_penalty)
-            #if initialise:
             vt_renter_out[idx]=vt_renter_lom
-            #else:
-                #B_pol=interp.interp_1d(grids.vX,b_renter_input, x_renter)
-                #expenditures=x_renter-B_pol
-                
-                #Enforce that maximum house size is the largest element of the H-set
-                #if grids.vH_renter[0]<=h_share_lom/rental_price_lom*expenditures<=grids.vH_renter[-1]:
-                #    flow_utility_lom=(par.vAgeEquiv[j]*w_lom*expenditures**(1-par.dSigma))/(1-par.dSigma)
-                #elif grids.vH_renter[0]>h_share_lom/rental_price_lom*expenditures:
-                #    flow_utility_lom=ut.u(j,expenditures-rental_price_lom*grids.vH_renter[0],grids.vH_renter[0],g_renter_lom, par)                
-                #else:
-                #    flow_utility_lom=ut.u(j,expenditures-rental_price_lom*grids.vH_renter[-1],grids.vH_renter[-1],g_renter_lom, par)
-                #if grids.vH_renter[0]<=h_share/rental_price*expenditures<=grids.vH_renter[-1]:
-                #    flow_utility_mc=(par.vAgeEquiv[j]*w*expenditures**(1-par.dSigma))/(1-par.dSigma)
-                #elif grids.vH_renter[0]>h_share/rental_price*expenditures:
-                #    flow_utility_mc=ut.u(j,expenditures-rental_price*grids.vH_renter[0],grids.vH_renter[0],g_renter, par)  
-                #else:
-                #    flow_utility_mc=ut.u(j,expenditures-rental_price*grids.vH_renter[-1],grids.vH_renter[-1],g_renter, par)  
-                #vt_renter_out[idx]=-1/(-1/vt_renter_lom+flow_utility_mc-flow_utility_lom) 
 
         else:
             vt_renter_out[idx]=NEG_INF
@@ -946,35 +1020,12 @@ def renter_sim_demand(default, initialise, par,grids,j,vt_renter_input, b_renter
             B_pol=interp.interp_1d(grids.vX,b_renter_input, x_renter)
             expenditures=x_renter-B_pol
             h_renter_out[idx]=max(min(h_share/rental_price*expenditures,grids.vH_renter[-1]),grids.vH_renter[0])
-            #if initialise:
             vt_renter_out[idx]=vt_renter_lom
-            #else:
-                #Enforce that maximum house size is the largest element of the H-set
-                #if grids.vH_renter[0]<=h_share_lom/rental_price_lom*expenditures<=grids.vH_renter[-1]:
-                #    flow_utility_lom=(par.vAgeEquiv[j]*w_lom*expenditures**(1-par.dSigma))/(1-par.dSigma)
-                #elif grids.vH_renter[0]>h_share_lom/rental_price_lom*expenditures:
-                #    flow_utility_lom=ut.u(j,expenditures-rental_price_lom*grids.vH_renter[0],grids.vH_renter[0],g_renter_lom, par)                
-                #else:
-                #    flow_utility_lom=ut.u(j,expenditures-rental_price_lom*grids.vH_renter[-1],grids.vH_renter[-1],g_renter_lom, par)
-                #if grids.vH_renter[0]<=h_share/rental_price*expenditures<=grids.vH_renter[-1]:
-                #    flow_utility_mc=(par.vAgeEquiv[j]*w*expenditures**(1-par.dSigma))/(1-par.dSigma)
-                #elif grids.vH_renter[0]>h_share/rental_price*expenditures:
-                #    flow_utility_mc=ut.u(j,expenditures-rental_price*grids.vH_renter[0],grids.vH_renter[0],g_renter, par)  
-                #else:
-                #    flow_utility_mc=ut.u(j,expenditures-rental_price*grids.vH_renter[-1],grids.vH_renter[-1],g_renter, par)  
-                #vt_renter_out[idx]=-1/(-1/vt_renter_lom+flow_utility_mc-flow_utility_lom)                 
         else:
             vt_renter_out[idx]=NEG_INF
             h_renter_out[idx]=0.
             
         if h_renter_out[idx]<0 or np.isnan(vt_renter_out[idx]):
-            #print(idx)
-            #print(x_renter, B_pol, expenditures)
-            #print(h_renter_out[idx], vt_renter_out[idx])
-            #print(rental_price, rental_price_lom)
-            #print(h_share, h_share_lom, w,w_lom, g_renter_lom, g_renter)
-            #print(vt_renter_lom)
-            #print(expenditures-rental_price_lom*grids.vH_renter[0],expenditures-rental_price*grids.vH_renter[0])
             assert h_renter_out[idx]>0 and not np.isnan(vt_renter_out[idx])
     return vt_renter_out, h_renter_out
 

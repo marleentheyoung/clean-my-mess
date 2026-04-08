@@ -17,6 +17,17 @@ import model.analysis.welfare as welfare_stats
 ###########################################################
 ### main
 def main():
+    """Run the main model pipeline: load parameters, create grids, compute welfare.
+
+    Loads calibrated Chebyshev coefficients for steady-state and transition-path
+    prices, constructs the parameter and grid objects, then computes
+    expenditure-equivalent welfare losses from sea-level rise via
+    find_expenditure_equiv. Prints the resulting welfare equivalents by
+    agent type (coastal owners, non-coastal owners, renters, newborns).
+
+    The hardcoded coefficient vectors (vCoeff_C, vCoeff_NC, etc.) are
+    converged outputs from initialise_coefficients_ss and find_coefficients.
+    """
     # import parameters
     vCoeff_C_initial=np.array([0.69906474, 0.,         0.,         0.,         0.        ])
     vCoeff_NC_initial=np.array([0.78259554, 0.,         0.,         0.,         0.        ])

@@ -44,20 +44,9 @@ def initial_joint(par, grids, bequest):
         #Scale by fraction with positive wealth and in income bin
         mPi_joint[:,e_index]=mPi_joint[:,e_index]*(1-vnowealth_frac[e_index])*grids.vPi_E[e_index]
         
-    #Paste no wealth observations    
+    #Paste no wealth observations
     mPi_joint[0,: ]+=grids.vPi_E*vnowealth_frac
-    
-    #VISUAL CHECK
-    #gridbounds_right=0.5*np.log(grids.vX_sim[2:])+0.5*np.log(grids.vX_sim[1:-1])
-    #gridsize_exceptails=gridbounds_right[1:]-gridbounds_right[:-1]
-    #gridsize_last=np.log(grids.vX_sim[-1])-gridbounds_right[-1]
-    #gridsizes=np.append(gridsize_exceptails,gridsize_last)
-    #for e_index in range(grids.vE.size):
-    #    plt.plot(np.log(grids.vX_sim[2:-1]),mPi_joint[e_index,2:-1]/(grids.vPi_E[e_index]*gridsize_exceptails),label=f'{e_index}')
-    #plt.legend()
-    #plt.show()
-    
-        
+
     return mPi_joint
 
 

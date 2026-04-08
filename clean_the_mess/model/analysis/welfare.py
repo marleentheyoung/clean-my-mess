@@ -174,6 +174,36 @@ def solve(par, grids, mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_in,
 
 @njit
 def find_expenditure_equiv(par,grids,mMarkov, vCoeff_C_initial, vCoeff_NC_initial, vCoeff_C_in, vCoeff_NC_in, sceptics=True):
+    """Compute expenditure-equivalent welfare losses from sea-level rise.
+
+    Finds the permanent income transfer (as a fraction of expenditure) that
+    makes each agent type indifferent between the steady state and the
+    transition path with rising flood risk. Does this by solving the VFI
+    at multiple welfare wedge values and interpolating to find the zero crossing.
+
+    The welfare wedge (wf_wedge) is a lump-sum transfer added to income in the
+    VFI. The function sweeps over 40 wedge values from -10% to +15%, computes
+    the welfare gap at each, and linearly interpolates to find the wedge that
+    equates steady-state and transition-path welfare.
+
+    Args:
+        par: Numba jitclass with model parameters. Note: par.wf_wedge is
+            temporarily modified during execution and reset to 0.0 on exit.
+        grids: Numba jitclass with model grids.
+        mMarkov: 2D array, income Markov transition matrix.
+        vCoeff_C_initial: 1D array (5,), initial steady-state coastal coefficients.
+            Scalar price = vCoeff_C_initial[0].
+        vCoeff_NC_initial: 1D array (5,), initial steady-state non-coastal coefficients.
+        vCoeff_C_in: 1D array (5,), transition-path coastal LoM coefficients.
+        vCoeff_NC_in: 1D array (5,), transition-path non-coastal LoM coefficients.
+        sceptics: If True, include both belief types.
+
+    Returns:
+        tax_equiv_C: Expenditure equivalent for coastal owners, shape (K, G, E).
+        tax_equiv_NC: Expenditure equivalent for non-coastal owners, shape (K, G, E).
+        tax_equiv_renter: Expenditure equivalent for renters, shape (K, G, E).
+        tax_equiv_newborns: Expenditure equivalent for newborns, shape (T, K, G, E).
+    """
     method='secant'
     func=False
     initial=True

@@ -25,6 +25,35 @@ import model.utils as misc
 
 @njit
 def solve(grids, par, iNj, mMarkov,vCoeff_C,vCoeff_NC, sceptics=True, welfare=True):
+    """Solve the household VFI backward over the full transition path.
+
+    Iterates backward over both time and age to compute optimal policy functions
+    (consumption, savings, housing, mortgage) for all agent types under
+    time-varying prices given by the Chebyshev law of motion coefficients.
+
+    Args:
+        grids: Numba jitclass with all model grids.
+        par: Numba jitclass with model parameters.
+        iNj: Number of lifecycle periods (ages).
+        mMarkov: 2D array, Markov transition matrix for persistent income.
+        vCoeff_C: 1D array (5,), Chebyshev coefficients for coastal price LoM.
+        vCoeff_NC: 1D array (5,), Chebyshev coefficients for non-coastal price LoM.
+        sceptics: If True, solve for both belief types (k_dim=2).
+            If False, solve realists only (k_dim=1).
+        welfare: If True, also compute welfare-adjusted value functions
+            (needed for consumption-equivalent analysis).
+
+    Returns:
+        vt_stay_c: Policy values for coastal stayers, shape (T, J, K, G, M, H, L, E).
+        vt_stay_nc: Policy values for non-coastal stayers, same shape.
+        vt_renter: Policy values for renters, shape (T, J, K, G, X, E).
+        b_stay_c: Savings policy for coastal stayers.
+        b_stay_nc: Savings policy for non-coastal stayers.
+        b_renter: Savings policy for renters.
+        v_owner_c_wf: Welfare-adjusted values for coastal owners (zeros if welfare=False).
+        v_owner_nc_wf: Welfare-adjusted values for non-coastal owners.
+        v_nonowner_wf: Welfare-adjusted values for renters.
+    """
     if sceptics==False:
         k_dim=1
     else:
@@ -168,7 +197,32 @@ def solve(grids, par, iNj, mMarkov,vCoeff_C,vCoeff_NC, sceptics=True, welfare=Tr
 
 @njit
 def solve_ss(grids, par, iNj, mMarkov,dCoeff_C, dCoeff_NC, initial = True, sceptics=True, welfare=False):
-    
+    """Solve the household VFI for a steady state (constant prices).
+
+    Backward induction over age only (time dimension = 1) at fixed prices.
+    Used to find the initial or terminal steady state before computing
+    the transition path.
+
+    Args:
+        grids: Numba jitclass with all model grids.
+        par: Numba jitclass with model parameters.
+        iNj: Number of lifecycle periods.
+        mMarkov: 2D array, Markov transition matrix for persistent income.
+        dCoeff_C: Scalar (float), steady-state coastal price. Pass vCoeff_C[0].
+        dCoeff_NC: Scalar (float), steady-state non-coastal price. Pass vCoeff_NC[0].
+        initial: If True, use initial-period flood probabilities.
+            If False, use terminal-period flood probabilities.
+        sceptics: If True, solve for both belief types (k_dim=2).
+        welfare: If False, return policy functions and values.
+            If True, return welfare-adjusted value functions instead.
+
+    Returns:
+        If welfare=False:
+            vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter
+        If welfare=True:
+            v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf, b_stay_c, b_stay_nc, b_renter
+    """
+
     if sceptics==False:
         k_dim=1
     else:

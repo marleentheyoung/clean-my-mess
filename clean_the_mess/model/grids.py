@@ -71,7 +71,25 @@ def equilogspace(x_min,x_max,n):
 ###########################################################
 
 def create(par, experiment=False):
-       
+    """Build all model grids and Markov chains from the parameter object.
+
+    Constructs the discretised state space for the household problem:
+    savings grids (vB, vX, vM), housing grids (vH, vH_renter), LTV grids (vL),
+    income grids (vE via Tauchen), amenity preference grid (vG), belief types (vK),
+    flood probability vectors, and simulation-resolution grids (vX_sim, vM_sim).
+    Also computes the payment-to-income (PTI) constraint matrix and median income
+    for normalisation.
+
+    Args:
+        par: Numba jitclass parameter object (from construct_jitclass).
+        experiment: If True, truncate flood probability vector to start at the
+            experiment year (2026) for counterfactual analysis.
+
+    Returns:
+        grids: Numba jitclass containing all grid arrays and scalars.
+        mMarkov: 2D numpy array, Markov transition matrix for persistent income.
+    """
+
     # create grids
     mMarkov, vE = tauch.tauchen(par.dRho, par.dSigmaeps, par.iNumStates, par.iM, par.time_increment)
     vPi_E=tauch.initial_dist(par, vE)
@@ -82,10 +100,7 @@ def create(par, experiment=False):
     vChi = tauch.lifecycle(par,par.j_ret)
     
     #We do not use fully transitory income shocks in the end, but have a structure that allows for it below
-    mMarkov_trans=np.ones((1,1))    
-    #mMarkov_trans, vE_trans = tauch.tauchen(0, par.dSigmaeps_trans, par.iNumTrans, par.iM)     
-    #vStationary_E = tauch.invar_dist(mMarkov)
-    #vE_combined, vStationary_E_combined = tauch.combine_vectors(vE, vE_trans, vStationary_E, mMarkov_trans[0,:])    
+    mMarkov_trans=np.ones((1,1))
     
     median_inc_pretax = tauch.median_inc(vChi, vE, mPi_E)  
     #For simplicity, and to prevent the income normalisation from changing with endogenous model outcomes, we ignore the mortgage rebate in the median income calculation
@@ -108,7 +123,6 @@ def create(par, experiment=False):
 
 
     vL_sim=np.linspace(0, 1.5, 35)
-    #vH=  np.array([1.50, 1.92, 2.46, 3.15, 4.03, 5.15])
     vH=np.linspace(1.50,par.h_max,3)
     vH_renter=np.array([1.17, 1.92])
     
@@ -120,10 +134,8 @@ def create(par, experiment=False):
     #We use a wider cut-off than vH[-1] because of the possibility of holding cash in hand and mortgage debt simultaneously (house price does not exceed 1 under normal calibration)
     
     max_income=np.exp(np.max(vChi)+np.max(vE_combined)-np.log(median_inc))
-    #vX=nonlinspace_jit(min_inc, par.iBmax*(1+par.r)+max_income, par.iNb, 1.4)
-    #The lowest value of vX should be s.t. the smallest rental unit remains affordable with pos consumption. 
+    #The lowest value of vX should be s.t. the smallest rental unit remains affordable with pos consumption.
     vX=nonlinspace_jit((1-(1-par.dDelta)/(1+par.r))*vH_renter[0]+par.dPsi, par.iBmax*(1+par.r)+max_income, par.iNb, 1.4)
-    #vX=nonlinspace_jit((1-(1-par.dDelta)/(1+par.r))*vH_renter[0]+par.dPsi, 10, par.iNb, 1.4)
     vM=nonlinspace_jit(0.01, par.iBmax*(1+par.r)+max_income, par.iNb, 1.4)
     vB=nonlinspace_jit(0, par.iBmax, par.iNb, 1.4)
     vX_sim=nonlinspace_jit(0, par.iBmax, par.iNb*2, 1)
@@ -150,9 +162,6 @@ def create(par, experiment=False):
                   'vPDF_z':vPDF_z,
                   'vChi': vChi,
                   'min_inc': min_inc,
-                  #'mIncome': np.exp(vChi[:, np.newaxis, np.newaxis] + vE[np.newaxis, :, np.newaxis] + vE_trans[np.newaxis, np.newaxis, :]) /median_inc,
-                  #'mIncome_pers': mIncome_pers,
-                  #'vIncome_ret': mIncome_pers[par.j_ret-1,:]*0.7,
                   'median_inc': median_inc,
                   'mMarkov_trans': mMarkov_trans[0,:],
                   'vEpsilon': np.array([0,1]),
@@ -182,10 +191,6 @@ def net_payment_frac(mortgage_size, par, j, e_index, vChi, vE):
 
 def max_mortgage_size(par, j, e_index, vChi, vE,
                       m_min=0.0, m_max=10000000):
-    """
-    Finds the maximum mortgage size such that
-    net_payment_frac(...) <= par.pti
-    """
 
     # If even zero mortgage violates the constraint, return 0
     if net_payment_frac(m_min, par, j, e_index, vChi, vE) > 0:

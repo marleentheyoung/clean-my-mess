@@ -143,10 +143,6 @@ def plot_distribution_2026(grids, par, func, method, mMarkov, vCoeff_C, vCoeff_N
     J_dim, K_dim, G_dim, M_dim, H_dim, L_dim, E_dim = mDist0_c.shape
     
        
-    # ------------------------------------------------------------
-    # 1) Distribution over L conditional on k=0 and k=1
-    #    Sum out all dimensions except L, conditional on each K
-    # ------------------------------------------------------------
     # For a fixed k, keep L and sum over J,G,M,H,E
     dist_L_k0 = mDist0_c[:, 0, :, :, :, :, :].sum(axis=(0, 1, 2, 3, 5))
     dist_L_k1 = mDist0_c[:, 1, :, :, :, :, :].sum(axis=(0, 1, 2, 3, 5))
@@ -174,10 +170,6 @@ def plot_distribution_2026(grids, par, func, method, mMarkov, vCoeff_C, vCoeff_N
     plt.savefig("dist_over_L_conditional_on_k.pdf", bbox_inches="tight")
     plt.show()
     
-    # ------------------------------------------------------------
-    # 2) Distribution over M
-    #    Sum out all dimensions except M
-    # ------------------------------------------------------------
     # Keep M and sum over J,K,G,H,L,E
     m1_index = misc.binary_search(0, grids.vM_sim.size, grids.vM_sim,10)
     dist_M = mDist0_c.sum(axis=(0, 1, 2, 4, 5, 6))
@@ -205,10 +197,6 @@ def plot_distribution_2026(grids, par, func, method, mMarkov, vCoeff_C, vCoeff_N
     J_dim, K_dim, G_dim, M_dim, H_dim, L_dim, E_dim = mDist1_c.shape
     
        
-    # ------------------------------------------------------------
-    # 1) Distribution over L conditional on k=0 and k=1
-    #    Sum out all dimensions except L, conditional on each K
-    # ------------------------------------------------------------
     # For a fixed k, keep L and sum over J,G,M,H,E
     dist_L_k0 = mDist1_c[:, 0, :, :, :, :, :].sum(axis=(0, 1, 2, 3, 5))
     dist_L_k1 = mDist1_c[:, 1, :, :, :, :, :].sum(axis=(0, 1, 2, 3, 5))
@@ -236,10 +224,6 @@ def plot_distribution_2026(grids, par, func, method, mMarkov, vCoeff_C, vCoeff_N
     plt.savefig("dist_over_L_conditional_on_k.pdf", bbox_inches="tight")
     plt.show()
     
-    # ------------------------------------------------------------
-    # 2) Distribution over M
-    #    Sum out all dimensions except M
-    # ------------------------------------------------------------
     # Keep M and sum over J,K,G,H,L,E
     m1_index = misc.binary_search(0, grids.vM_sim.size, grids.vM_sim,10)
     dist_M_k0 = mDist1_c[:, 0, :, :, :, :, :].sum(axis=(0, 1, 3, 4, 5))
@@ -355,19 +339,6 @@ def plot_rentalpricepaths(par, grids, mMarkov, vCoeff_C_initial, vCoeff_NC_initi
     plt.scatter([x0_year], [y_coastal], zorder=5)
     plt.scatter([x0_year], [y_inland], zorder=5)
 
-    
-    # Annotations above dots
-    #plt.annotate("Initial flood-exposed price",
-    #             (x0_year, y_coastal),
-    #             xytext=(10, 10),
-    #             textcoords="offset points",
-    #             ha='center', fontsize=9)
-    
-    #plt.annotate("Initial inland price",
-    #             (x0_year, y_inland),
-    #             xytext=(10, 10),
-    #             textcoords="offset points",
-    #             ha='center', fontsize=9)
     
     xT_year = years[-1]
 

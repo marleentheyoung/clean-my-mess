@@ -29,8 +29,62 @@ def flatten_third_dim(mat):
 
 @njit
 def generate_pricepath(grids, par, func, mMarkov, vCoeff_in_C,vCoeff_in_NC, dP_C_initial, dP_NC_initial, mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, coastal_mass_J, noncoastal_mass_J, renter_mass_J, method, sceptics, experiment=False, welfare=False, plot_stocks=False):
-  
-    
+    """Simulate the full price path and distribution evolution over the transition.
+
+    Solves the VFI once for the given coefficients, then steps forward through
+    time: at each period, clears both housing markets (or uses LoM prices if
+    welfare=True), updates the distribution, and records the price history.
+
+    Args:
+        grids: Numba jitclass with model grids.
+        par: Numba jitclass with model parameters.
+        func: If False, find market-clearing prices at each step.
+            If True, use LoM-implied prices (skip market clearing).
+        mMarkov: 2D array, income Markov transition matrix.
+        vCoeff_in_C: 1D array (5,), coastal LoM coefficients.
+        vCoeff_in_NC: 1D array (5,), non-coastal LoM coefficients.
+        dP_C_initial: Scalar, initial coastal price (= vCoeff_C_initial[0]).
+        dP_NC_initial: Scalar, initial non-coastal price (= vCoeff_NC_initial[0]).
+        mDist0_c: Initial coastal owner distribution.
+        mDist0_nc: Initial non-coastal owner distribution.
+        mDist0_renter: Initial renter distribution.
+        rental_stock_C0: Initial coastal rental stock.
+        rental_stock_NC0: Initial non-coastal rental stock.
+        coastal_beq0: Initial coastal bequest aggregate.
+        noncoastal_beq0: Initial non-coastal bequest aggregate.
+        savings_beq0: Initial savings bequest aggregate.
+        coastal_mass_J: Terminal-age coastal owner mass by belief type.
+        noncoastal_mass_J: Terminal-age non-coastal owner mass by belief type.
+        renter_mass_J: Terminal-age renter mass by belief type.
+        method: String, market-clearing algorithm ('secant' or 'bisection').
+        sceptics: If True, include both belief types.
+        experiment: If True, truncate time horizon to experiment year.
+        welfare: If True, skip market clearing and use LoM prices
+            (for welfare analysis where prices are already known).
+        plot_stocks: If True, track housing stock evolution over time.
+
+    Returns:
+        price_history: 2D array (T, 2), market-clearing prices [P_C, P_NC] per period.
+        mDist1_c: Final coastal owner distribution.
+        mDist1_nc: Final non-coastal owner distribution.
+        mDist1_renter: Final renter distribution.
+        stock_demand_rental_C1: Final coastal rental stock.
+        stock_demand_rental_NC1: Final non-coastal rental stock.
+        vcoastal_beq: 1D array, coastal bequests per period.
+        vnoncoastal_beq: 1D array, non-coastal bequests per period.
+        vsavings_beq: 1D array, savings bequests per period.
+        vt_stay_c: Coastal stayer policy values from VFI.
+        vt_stay_nc: Non-coastal stayer policy values from VFI.
+        vt_renter: Renter policy values from VFI.
+        v_owner_c_wf: Welfare values for coastal owners.
+        v_owner_nc_wf: Welfare values for non-coastal owners.
+        v_nonowner_wf: Welfare values for renters.
+        coastal_stock: Housing stock by belief type over time (if plot_stocks).
+        noncoastal_stock: Housing stock by belief type over time.
+        rental_stock: Rental stock by belief type over time.
+    """
+
+
     vt_stay_c, vt_stay_nc, vt_renter, b_stay_c, b_stay_nc, b_renter, v_owner_c_wf, v_owner_nc_wf, v_nonowner_wf = household_problem.solve(grids, par, par.iNj, mMarkov,vCoeff_in_C,vCoeff_in_NC, sceptics, welfare)
     dP_C_lag=dP_C_initial
     dP_NC_lag=dP_NC_initial
@@ -82,14 +136,6 @@ def generate_pricepath(grids, par, func, mMarkov, vCoeff_in_C,vCoeff_in_NC, dP_C
         bound_nc_l_bis=guess_nc-0.1
         bound_nc_r_bis=guess_nc+0.1            
         
-        #start=time.perf_counter()
-        
-        #print("Coastal bequest in:",coastal_beq0)
-        #print("Noncoastal bequest in:",noncoastal_beq0)
-        #print("Savings bequest in:", savings_beq0)
-        #print("Coastal owner sum in:", np.sum(mDist0_c))
-        #print("Noncoastal owner sum in:", np.sum(mDist0_nc))
-        #print("Renter sum in:",np.sum(mDist0_renter))
         if not welfare and not plot_stocks:
             price_history[t_index,0], price_history[t_index,1], it, succes = house_prices_algorithm(sceptics, func, method, grids, par, guess_c, guess_nc, bound_c_l, bound_nc_l, bound_c_l_bis, bound_nc_l_bis, bound_c_r_bis, bound_nc_r_bis, mMarkov, par.iNj,  mDist0_c, mDist0_nc, mDist0_renter, vt_stay_c[t_index,],  vt_stay_nc[t_index,], vt_renter[t_index,], b_stay_c[t_index,],b_stay_nc[t_index,],  b_renter[t_index,], t_index, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0, vCoeff_in_C, vCoeff_in_NC, dP_C_lag, dP_NC_lag)
         else:
@@ -133,7 +179,48 @@ def generate_pricepath(grids, par, func, mMarkov, vCoeff_in_C,vCoeff_in_NC, dP_C
         
 @njit
 def find_coefficients(par, grids, method, sceptics, iNj, mMarkov, vCoeff_C, vCoeff_NC,dP_C_initial, dP_NC_initial,mDist0_c, mDist0_nc, mDist0_renter, rental_stock_C0, rental_stock_NC0, coastal_beq0, noncoastal_beq0, savings_beq0):
-  
+    """Find Chebyshev LoM coefficients for the transition-path equilibrium.
+
+    Iterates: (1) solve full VFI over transition path, (2) forward-simulate
+    clearing markets at each time step, (3) regress market-clearing prices
+    on Chebyshev basis via OLS, (4) update coefficients with dampening (rho=0.5).
+    Converges when both coastal and non-coastal coefficient vectors change by
+    less than 0.001*rho per element. Typically requires 10-15 iterations.
+
+    Args:
+        par: Numba jitclass with model parameters.
+        grids: Numba jitclass with model grids.
+        method: String, market-clearing algorithm ('secant' or 'bisection').
+        sceptics: If True, include both belief types.
+        iNj: Number of lifecycle periods.
+        mMarkov: 2D array, income Markov transition matrix.
+        vCoeff_C: 1D array (5,), initial guess for coastal LoM coefficients.
+        vCoeff_NC: 1D array (5,), initial guess for non-coastal LoM coefficients.
+        dP_C_initial: Scalar, initial steady-state coastal price (= vCoeff_C_initial[0]).
+        dP_NC_initial: Scalar, initial steady-state non-coastal price (= vCoeff_NC_initial[0]).
+        mDist0_c: Initial coastal owner distribution from steady state.
+        mDist0_nc: Initial non-coastal owner distribution.
+        mDist0_renter: Initial renter distribution.
+        rental_stock_C0: Initial coastal rental stock.
+        rental_stock_NC0: Initial non-coastal rental stock.
+        coastal_beq0: Initial coastal bequest aggregate.
+        noncoastal_beq0: Initial non-coastal bequest aggregate.
+        savings_beq0: Initial savings bequest aggregate.
+
+    Returns:
+        dP_C_vec: 1D array, market-clearing coastal prices at each time step.
+        dP_NC_vec: 1D array, market-clearing non-coastal prices at each time step.
+        vCoeff_C: Converged coastal LoM coefficients.
+        vCoeff_NC: Converged non-coastal LoM coefficients.
+        iteration: Number of iterations used.
+        vt_stay_c: Final coastal stayer policy values.
+        vt_stay_nc: Final non-coastal stayer policy values.
+        vt_renter: Final renter policy values.
+        v_owner_c_wf: Welfare values for coastal owners.
+        v_owner_nc_wf: Welfare values for non-coastal owners.
+        v_nonowner_wf: Welfare values for renters.
+    """
+
     max_it=15
     iteration =0   
 
@@ -198,6 +285,47 @@ def coeff_updater(par, grids, input_data, vCoeff_in_C, vCoeff_in_NC, iT):
 
 @njit
 def initialise_coefficients_ss(par, grids, method, iNj, mMarkov, vCoeff_C_ss, vCoeff_NC_ss, initial = True, sceptics=True):
+    """Find steady-state equilibrium prices via iterated VFI and market clearing.
+
+    Iterates: (1) solve VFI at guessed constant price, (2) find stationary
+    distribution, (3) compute market-clearing price, (4) update price guess
+    with dampening. Adaptive step size reduces rho when oscillation is detected.
+    Uses func=True internally, meaning VFI sees LoM-implied prices that equal
+    the constant coefficient guess.
+
+    Note: Only the first element (vCoeff[0]) is updated -- higher-order
+    Chebyshev terms are zero in steady state since prices are constant.
+
+    Args:
+        par: Numba jitclass with model parameters.
+        grids: Numba jitclass with model grids.
+        method: String, market-clearing algorithm ('secant' or 'bisection').
+        iNj: Number of lifecycle periods.
+        mMarkov: 2D array, income Markov transition matrix.
+        vCoeff_C_ss: 1D array (5,), initial guess for coastal coefficients.
+            Modified in-place; elements 1-4 are zeroed.
+        vCoeff_NC_ss: 1D array (5,), initial guess for non-coastal coefficients.
+            Modified in-place; elements 1-4 are zeroed.
+        initial: If True, find initial steady state (t=0 flood probs).
+            If False, find terminal steady state (t=T flood probs).
+        sceptics: If True, include both belief types.
+
+    Returns:
+        dP_C_guess: Final market-clearing coastal price.
+        dP_NC_guess: Final market-clearing non-coastal price.
+        vCoeff_C_ss: Converged coastal coefficient vector.
+        vCoeff_NC_ss: Converged non-coastal coefficient vector.
+        mDist1_c: Stationary coastal owner distribution.
+        mDist1_nc: Stationary non-coastal owner distribution.
+        mDist1_renter: Stationary renter distribution.
+        rental_stock_C: Coastal rental stock at steady state.
+        rental_stock_NC: Non-coastal rental stock at steady state.
+        coastal_beq: Coastal bequest aggregate at steady state.
+        noncoastal_beq: Non-coastal bequest aggregate.
+        savings_beq: Savings bequest aggregate.
+        no_beq: Number of agents with no bequest.
+        iteration: Number of iterations used.
+    """
     func = True
     max_it=25
     iteration =0
@@ -288,12 +416,6 @@ def initialise_coefficients_ss(par, grids, method, iNj, mMarkov, vCoeff_C_ss, vC
 def precompute_market_data(sceptics, func, grids, par, mMarkov, iNj, mDist1_c, mDist1_nc, mDist1_renter, 
                           vt_stay_c, vt_stay_nc,  vt_renter,b_stay_c, b_stay_nc,  b_renter, t_index, 
                           rental_stock_C, rental_stock_NC, coastal_beq, noncoastal_beq, savings_beq, vCoeff_in_C, vCoeff_in_NC, dP_C_lag, dP_NC_lag):
-    """
-    Pre-compute market data that doesn't change during price iteration.
-    This avoids redundant calculations in the inner loop.
-    
-    Expected gain: 20-30% reduction in computation time by eliminating redundant calculations
-    """
     
     
     # Store all the market data that doesn't depend on prices
@@ -352,11 +474,6 @@ def compute_excess_demand_pair(dP_C, dP_NC, market_data):
 @njit
 def bisection_root_finding(compute_func, bounds_low, bounds_high, market_data, 
                          price_other, is_coastal=True, tol=1e-5, max_iter=50):
-    """
-    Adaptive root finding with caching and improved convergence.
-    
-    Expected gain: 15-25% faster convergence with adaptive step sizes
-    """
     a, b = bounds_low, bounds_high
     
     # Cache function evaluations
@@ -496,11 +613,6 @@ def secant_method_system_2d(compute_excess_demand_pair, dP_C_0, dP_NC_0,dP_C_1, 
 @njit
 def check_convergence(dP_C, dP_NC, dP_C_prev, dP_NC_prev, excess_C, excess_NC, 
                      price_tol=1e-3, error_tol=1e-4):
-    """
-    Modular convergence checking with multiple criteria.
-    
-    Expected gain: 5-10% by optimizing convergence logic
-    """
     price_dist = max(abs(dP_C - dP_C_prev), abs(dP_NC - dP_NC_prev))
     error = max(abs(excess_C), abs(excess_NC))
     
@@ -538,13 +650,6 @@ def house_prices_algorithm(sceptics, func, method, grids, par, guess_c, guess_nc
         dP_NC_2 = guess_nc + 2*SECANT_STEP/3
 
         dP_C, dP_NC, succes, iteration, excess_demand_C, excess_demand_NC = secant_method_system_2d(compute_excess_demand_pair, dP_C_0, dP_NC_0,dP_C_1, dP_NC_1,dP_C_2, dP_NC_2,bound_c_l, bound_nc_l,market_data)
-        #if succes == True:
-            #if np.abs(excess_demand_C)>1e-4 or np.abs(excess_demand_NC)>1e-4:
-                #bound_c_l_bis=dP_C-0.01
-                #bound_c_r_bis=dP_C+0.01
-                #bound_nc_l_bis=dP_NC-0.01
-                #bound_nc_r_bis=dP_NC+0.01
-                #succes=False
         if succes == False:
             print("Secant method failed")
             for iteration in range(MAX_ITERATIONS):
@@ -577,12 +682,6 @@ def house_prices_algorithm(sceptics, func, method, grids, par, guess_c, guess_nc
                 if converged:
                     succes = True
                     break
-
-                # Update bounds for next iteration (adaptive bounds)
-                #bound_c_l_bis = max(bound_c_l_bis, dP_C - 0.1)
-                #bound_c_r_bis = min(bound_c_r_bis, dP_C + 0.1)
-                #bound_nc_l_bis = max(bound_nc_l_bis, dP_NC - 0.1)
-                #bound_nc_r_bis = min(bound_nc_r_bis, dP_NC + 0.1)
 
                 # Early exit if making no progress
                 if iteration > 2 and price_dist < 5e-4:

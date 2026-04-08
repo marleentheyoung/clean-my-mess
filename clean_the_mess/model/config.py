@@ -17,7 +17,7 @@ def create_par_dict():
     """Create the parameter dictionary for the model.
 
     Returns a plain dict that is converted to a numba jitclass via
-    misc_functions.construct_jitclass().
+    utils.construct_jitclass().
 
     Values below are calibrated outputs — do not round or modify
     without re-running calibration. Significant-digit precision

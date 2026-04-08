@@ -1,145 +1,193 @@
 {
-  "nodes": [
-    {"id": "par", "lines": 85, "layer": 0},
-    {"id": "tauchen", "lines": 142, "layer": 0},
-    {"id": "grids", "lines": 64, "layer": 0},
-    {"id": "interp", "lines": 278, "layer": 0},
-    {"id": "utility", "lines": 66, "layer": 0},
-    {"id": "lom", "lines": 37, "layer": 0},
-    {"id": "simulate_initial_joint", "lines": 63, "layer": 0},
-    {"id": "misc_functions", "lines": 123, "layer": 1},
-    {"id": "grid_creation", "lines": 134, "layer": 2},
-    {"id": "buyer_problem", "lines": 63, "layer": 1},
-    {"id": "buyer_problem_simulation", "lines": 68, "layer": 2},
-    {"id": "stayer_problem", "lines": 97, "layer": 1},
-    {"id": "stayer_problem_renter", "lines": 117, "layer": 1},
-    {"id": "mortgage_choice_simulation", "lines": 86, "layer": 2},
-    {"id": "mortgage_choice_simulation_exc", "lines": 132, "layer": 2},
-    {"id": "continuation_value_nolearning", "lines": 588, "layer": 2},
-    {"id": "moments", "lines": 539, "layer": 2},
-    {"id": "household_problem", "lines": 373, "layer": 3},
-    {"id": "simulation", "lines": 1265, "layer": 3},
-    {"id": "equilibrium", "lines": 637, "layer": 4},
-    {"id": "experiments", "lines": 50, "layer": 5},
-    {"id": "welfare", "lines": 357, "layer": 5},
-    {"id": "full_calibration", "lines": 192, "layer": 5},
-    {"id": "plot_creation", "lines": 612, "layer": 6},
-    {"id": "solve", "lines": 53, "layer": 6}
-  ],
-  "edges": [
-    {"from": "misc_functions", "to": "interp", "type": "import", "as": "from interp import (binary_search, binary_search_sim, _interp_2d, interp_2d, _interp_3d, interp_3d, _interp_4d, interp_4d)"},
-    {"from": "grid_creation", "to": "misc_functions", "type": "import", "as": "import misc_functions as misc"},
-    {"from": "grid_creation", "to": "tauchen", "type": "import", "as": "import tauchen as tauch"},
-    {"from": "grid_creation", "to": "grids", "type": "import", "as": "import grids as grid"},
-    {"from": "buyer_problem", "to": "utility", "type": "import", "as": "import utility as ut"},
-    {"from": "buyer_problem", "to": "interp", "type": "import", "as": "import interp as interpfun"},
-    {"from": "buyer_problem_simulation", "to": "misc_functions", "type": "import", "as": "import misc_functions as misc"},
-    {"from": "stayer_problem", "to": "utility", "type": "import", "as": "import utility as ut"},
-    {"from": "stayer_problem", "to": "grids", "type": "import", "as": "import grids as gridsfun"},
-    {"from": "stayer_problem_renter", "to": "utility", "type": "import", "as": "import utility as ut"},
-    {"from": "stayer_problem_renter", "to": "grids", "type": "import", "as": "import grids as gridsfun"},
-    {"from": "stayer_problem_renter", "to": "interp", "type": "import", "as": "import interp as interpfun"},
-    {"from": "mortgage_choice_simulation", "to": "misc_functions", "type": "import", "as": "import misc_functions as misc"},
-    {"from": "mortgage_choice_simulation", "to": "interp", "type": "import", "as": "import interp as interp"},
-    {"from": "mortgage_choice_simulation_exc", "to": "misc_functions", "type": "import", "as": "import misc_functions as misc"},
-    {"from": "mortgage_choice_simulation_exc", "to": "interp", "type": "import", "as": "import interp as interp"},
-    {"from": "continuation_value_nolearning", "to": "misc_functions", "type": "import", "as": "import misc_functions as misc"},
-    {"from": "continuation_value_nolearning", "to": "utility", "type": "import", "as": "import utility as ut"},
-    {"from": "continuation_value_nolearning", "to": "interp", "type": "import", "as": "import interp as interp"},
-    {"from": "moments", "to": "misc_functions", "type": "import", "as": "import misc_functions as misc"},
-    {"from": "moments", "to": "interp", "type": "import", "as": "import interp as interpfun"},
-    {"from": "moments", "to": "lom", "type": "import", "as": "import lom as lom"},
-    {"from": "household_problem", "to": "continuation_value_nolearning", "type": "import", "as": "import continuation_value_nolearning as continuation_value_epsilons"},
-    {"from": "household_problem", "to": "stayer_problem", "type": "import", "as": "import stayer_problem as stayer_problem"},
-    {"from": "household_problem", "to": "stayer_problem_renter", "type": "import", "as": "import stayer_problem_renter as stayer_problem_renter"},
-    {"from": "household_problem", "to": "buyer_problem", "type": "import", "as": "import buyer_problem as buyer_problem"},
-    {"from": "household_problem", "to": "lom", "type": "import", "as": "import lom as lom"},
-    {"from": "household_problem", "to": "misc_functions", "type": "import", "as": "import misc_functions as misc"},
-    {"from": "simulation", "to": "interp", "type": "import", "as": "import interp as interp"},
-    {"from": "simulation", "to": "lom", "type": "import", "as": "import lom as lom"},
-    {"from": "simulation", "to": "misc_functions", "type": "import", "as": "import misc_functions as misc"},
-    {"from": "simulation", "to": "buyer_problem_simulation", "type": "import", "as": "import buyer_problem_simulation as buy_sim"},
-    {"from": "simulation", "to": "utility", "type": "import", "as": "import utility as ut"},
-    {"from": "simulation", "to": "mortgage_choice_simulation", "type": "import", "as": "import mortgage_choice_simulation as mortgage_sim"},
-    {"from": "simulation", "to": "mortgage_choice_simulation_exc", "type": "import", "as": "import mortgage_choice_simulation_exc as mortgage_sim_exc"},
-    {"from": "simulation", "to": "simulate_initial_joint", "type": "import", "as": "import simulate_initial_joint as initial_joint_sim"},
-    {"from": "simulation", "to": "tauchen", "type": "import", "as": "import tauchen as tauch"},
-    {"from": "equilibrium", "to": "household_problem", "type": "import", "as": "import household_problem as household_problem"},
-    {"from": "equilibrium", "to": "simulation", "type": "import", "as": "import simulation as sim"},
-    {"from": "equilibrium", "to": "lom", "type": "import", "as": "import lom as lom"},
-    {"from": "equilibrium", "to": "misc_functions", "type": "import", "as": "import misc_functions as misc"},
-    {"from": "experiments", "to": "household_problem", "type": "import", "as": "import household_problem as household_problem"},
-    {"from": "experiments", "to": "simulation", "type": "import", "as": "import simulation as sim"},
-    {"from": "experiments", "to": "lom", "type": "import", "as": "import lom as lom"},
-    {"from": "experiments", "to": "equilibrium", "type": "import", "as": "import equilibrium as equil"},
-    {"from": "experiments", "to": "grid_creation", "type": "import", "as": "import grid_creation as grid_creation"},
-    {"from": "welfare", "to": "misc_functions", "type": "import", "as": "import misc_functions as misc"},
-    {"from": "welfare", "to": "household_problem", "type": "import", "as": "import household_problem as household_problem"},
-    {"from": "welfare", "to": "simulation", "type": "import", "as": "import simulation as sim"},
-    {"from": "welfare", "to": "equilibrium", "type": "import", "as": "import equilibrium as equil"},
-    {"from": "welfare", "to": "simulate_initial_joint", "type": "import", "as": "import simulate_initial_joint as initial_joint_sim"},
-    {"from": "full_calibration", "to": "equilibrium", "type": "import", "as": "import equilibrium as equil"},
-    {"from": "full_calibration", "to": "misc_functions", "type": "import", "as": "import misc_functions as misc"},
-    {"from": "full_calibration", "to": "tauchen", "type": "import", "as": "import tauchen as tauch"},
-    {"from": "full_calibration", "to": "grid_creation", "type": "import", "as": "import grid_creation as grid_creation"},
-    {"from": "full_calibration", "to": "household_problem", "type": "import", "as": "import household_problem as household_problem"},
-    {"from": "full_calibration", "to": "simulation", "type": "import", "as": "import simulation as sim"},
-    {"from": "full_calibration", "to": "moments", "type": "import", "as": "import moments as find_moments"},
-    {"from": "full_calibration", "to": "lom", "type": "import", "as": "import lom as lom"},
-    {"from": "plot_creation", "to": "lom", "type": "import", "as": "import lom as lom"},
-    {"from": "plot_creation", "to": "tauchen", "type": "import", "as": "import tauchen as tauch"},
-    {"from": "plot_creation", "to": "par", "type": "import", "as": "import par as parfile"},
-    {"from": "plot_creation", "to": "misc_functions", "type": "import", "as": "import misc_functions as misc"},
-    {"from": "plot_creation", "to": "grid_creation", "type": "import", "as": "import grid_creation as grid_creation"},
-    {"from": "plot_creation", "to": "experiments", "type": "import", "as": "import experiments as experiments"},
-    {"from": "plot_creation", "to": "equilibrium", "type": "import", "as": "import equilibrium as equil"},
-    {"from": "plot_creation", "to": "household_problem", "type": "import", "as": "import household_problem as household_problem"},
-    {"from": "plot_creation", "to": "simulation", "type": "import", "as": "import simulation as sim"},
-    {"from": "solve", "to": "misc_functions", "type": "import", "as": "import misc_functions as misc"},
-    {"from": "solve", "to": "tauchen", "type": "import", "as": "import tauchen as tauch"},
-    {"from": "solve", "to": "par", "type": "import", "as": "import par as parfile"},
-    {"from": "solve", "to": "grid_creation", "type": "import", "as": "import grid_creation as grid_creation"},
-    {"from": "solve", "to": "welfare", "type": "import", "as": "import welfare as welfare_stats"}
-  ],
+  "_meta": {
+    "description": "Post-restructure dependency graph for clean_the_mess/model/",
+    "generated": "2026-04-08",
+    "nodes_are": "module paths relative to clean_the_mess/",
+    "edges_mean": "source imports target"
+  },
+
+  "adjacency_list": {
+    "model/__init__": [],
+    "model/config": [],
+    "model/grids_util": [],
+    "model/interp": [],
+    "model/lom": [],
+    "model/tauchen": [],
+    "model/utility": [],
+
+    "model/utils": [
+      "model/interp"
+    ],
+
+    "model/grids": [
+      "model/tauchen",
+      "model/utils"
+    ],
+
+    "model/run": [
+      "model/utils",
+      "model/tauchen",
+      "model/config",
+      "model/grids",
+      "model/analysis/welfare"
+    ],
+
+    "model/plots": [
+      "model/lom",
+      "model/tauchen",
+      "model/config",
+      "model/utils",
+      "model/grids",
+      "model/analysis/experiments",
+      "model/equilibrium/solver",
+      "model/household/vfi",
+      "model/simulation/distribution"
+    ],
+
+    "model/analysis/__init__": [],
+    "model/analysis/experiments": [
+      "model/household/vfi",
+      "model/simulation/distribution",
+      "model/lom",
+      "model/equilibrium/solver",
+      "model/grids"
+    ],
+    "model/analysis/moments": [
+      "model/utils",
+      "model/interp",
+      "model/lom"
+    ],
+    "model/analysis/welfare": [
+      "model/utils",
+      "model/household/vfi",
+      "model/simulation/distribution",
+      "model/equilibrium/solver",
+      "model/simulation/initial_joint"
+    ],
+
+    "model/equilibrium/__init__": [],
+    "model/equilibrium/solver": [
+      "model/household/vfi",
+      "model/simulation/distribution",
+      "model/lom",
+      "model/utils"
+    ],
+
+    "model/household/__init__": [],
+    "model/household/buyer": [
+      "model/utility",
+      "model/interp"
+    ],
+    "model/household/continuation": [
+      "model/utils",
+      "model/utility",
+      "model/interp"
+    ],
+    "model/household/renter": [
+      "model/utility",
+      "model/grids",
+      "model/interp"
+    ],
+    "model/household/stayer": [
+      "model/utility",
+      "model/grids"
+    ],
+    "model/household/vfi": [
+      "model/household/continuation",
+      "model/household/stayer",
+      "model/household/renter",
+      "model/household/buyer",
+      "model/lom",
+      "model/utils"
+    ],
+
+    "model/simulation/__init__": [],
+    "model/simulation/buyer_sim": [
+      "model/utils"
+    ],
+    "model/simulation/distribution": [
+      "model/interp",
+      "model/lom",
+      "model/utils",
+      "model/simulation/buyer_sim",
+      "model/utility",
+      "model/simulation/mortgage_sim",
+      "model/simulation/mortgage_sim_exc",
+      "model/simulation/initial_joint",
+      "model/tauchen"
+    ],
+    "model/simulation/excess_demand": [
+      "model/interp",
+      "model/lom",
+      "model/utils",
+      "model/simulation/buyer_sim",
+      "model/utility",
+      "model/simulation/mortgage_sim",
+      "model/simulation/mortgage_sim_exc",
+      "model/simulation/initial_joint",
+      "model/tauchen"
+    ],
+    "model/simulation/initial_joint": [],
+    "model/simulation/mortgage_sim": [
+      "model/utils",
+      "model/interp"
+    ],
+    "model/simulation/mortgage_sim_exc": [
+      "model/utils",
+      "model/interp"
+    ],
+
+    "full_calibration": [
+      "_LEGACY_FLAT_IMPORTS_NOT_MIGRATED"
+    ]
+  },
+
   "layers": {
-    "0": [
-      "par",
-      "tauchen",
-      "grids",
-      "interp",
-      "utility",
-      "lom",
-      "simulate_initial_joint"
+    "0_foundation": [
+      "model/config",
+      "model/grids_util",
+      "model/interp",
+      "model/lom",
+      "model/tauchen",
+      "model/utility",
+      "model/simulation/initial_joint"
     ],
-    "1": [
-      "misc_functions",
-      "buyer_problem",
-      "stayer_problem",
-      "stayer_problem_renter"
+    "1_core_utilities": [
+      "model/utils",
+      "model/grids"
     ],
-    "2": [
-      "grid_creation",
-      "buyer_problem_simulation",
-      "mortgage_choice_simulation",
-      "mortgage_choice_simulation_exc",
-      "continuation_value_nolearning",
-      "moments"
+    "2_household_subproblems": [
+      "model/household/buyer",
+      "model/household/continuation",
+      "model/household/renter",
+      "model/household/stayer"
     ],
-    "3": [
-      "household_problem",
-      "simulation"
+    "3_household_orchestrator": [
+      "model/household/vfi"
     ],
-    "4": [
-      "equilibrium"
+    "4_simulation_components": [
+      "model/simulation/buyer_sim",
+      "model/simulation/mortgage_sim",
+      "model/simulation/mortgage_sim_exc"
     ],
-    "5": [
-      "experiments",
-      "welfare",
+    "5_simulation_orchestrators": [
+      "model/simulation/distribution",
+      "model/simulation/excess_demand"
+    ],
+    "6_equilibrium": [
+      "model/equilibrium/solver"
+    ],
+    "7_analysis": [
+      "model/analysis/experiments",
+      "model/analysis/moments",
+      "model/analysis/welfare"
+    ],
+    "8_entry_points": [
+      "model/run",
+      "model/plots"
+    ],
+    "out_of_scope": [
       "full_calibration"
-    ],
-    "6": [
-      "plot_creation",
-      "solve"
     ]
   }
 }
