@@ -27,7 +27,7 @@ And when applicable, run the steady-state solve + distribution check to verify n
 
 ## Step 1: Create package skeleton
 
-Create the `model/` directory with empty `__init__.py` files.
+Create the `model/` directory with empty `__init__.py` files. **Keep all `__init__.py` files empty throughout the migration.** Use explicit imports (`from model.household.vfi import solve_ss`) not re-exports. Less maintenance burden for a research codebase.
 
 ```
 model/__init__.py
@@ -208,17 +208,13 @@ This is the most complex step. The original 4-file split was judged too aggressi
 
 **Revised split (2 files):**
 
-1. `model/simulation/core.py` -- **Public API functions** called by equilibrium/welfare:
-   - `stat_dist_finder`, `excess_demand_continuous`, `update_dist_continuous`
+1. `model/simulation/distribution.py` -- `stat_dist_finder`, `update_dist_continuous`, + **all helpers they call**: `simulate_buy`, `simulate_buy_ret`, `simulate_rent`, `simulate_rent_ret`, `simulate_stay`, `simulate_stay_ret`, `simulate_rent_outer`, `simulate_buy_outer`, `continuous_decide`, `continuous_decide_renter`, `renter_sim`, `renter_sim_demand`, `renter_solve`, `compute_p_left`, `construct_m1`, `mortgage_matrix_solve`
 
-2. `model/simulation/helpers.py` -- **Private helper functions** called only by core.py:
-   - `simulate_buy`, `simulate_buy_ret`, `simulate_rent`, `simulate_rent_ret`, `simulate_stay`, `simulate_stay_ret`, `simulate_rent_outer`, `simulate_buy_outer`
-   - `continuous_decide`, `continuous_decide_renter`, `renter_sim`, `renter_sim_demand`, `renter_solve`, `compute_p_left`
-   - `construct_m1`, `mortgage_matrix_solve`
+2. `model/simulation/excess_demand.py` -- `excess_demand_continuous` (the equilibrium interface)
 
-All functions stay `@njit`. Cross-module `@njit` calls work fine in Numba — `core.py` imports from `helpers.py`.
+Tightly-coupled functions stay together in distribution.py to avoid error-prone cross-file @njit calls. excess_demand.py is separated because it's the API boundary to equilibrium.
 
-Update `model/simulation/__init__.py` to re-export `stat_dist_finder`, `excess_demand_continuous`, `update_dist_continuous`.
+All functions stay `@njit`. `__init__.py` stays empty — use explicit imports.
 
 Create shim at old `simulation.py` location with deprecation comment.
 
@@ -288,9 +284,11 @@ Only update import statements to point to `model.*` paths. Do not refactor any l
 
 ---
 
-## Step 7: Remove shims
+## Step 7: Remove shims (KILL DATE: same session as the moves)
 
-Once all consumers are updated, remove the backward-compatibility shims in the old locations.
+Once all consumers are updated, remove the backward-compatibility shims in the old locations. **Shims must not survive across sessions.** If Step 7 cannot be completed in the same session as the module moves, it must be the first task of the next session.
+
+Verification: `grep -rn "DEPRECATION.*shim" clean_the_mess/` should return zero results after this step.
 
 **Test:** Full steady-state run + distribution comparison against reference.
 
