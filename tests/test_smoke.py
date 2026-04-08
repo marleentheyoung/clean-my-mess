@@ -14,7 +14,7 @@ def test_all_modules_import():
     import equilibrium
     import household_problem_epsilons_nolearning
     import moments
-    import proper_welfare_debug
+    import welfare
     import experiments
     import plot_creation
     import interp

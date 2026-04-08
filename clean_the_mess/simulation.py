@@ -134,11 +134,11 @@ def excess_demand_continuous(sceptics, initialise, grids, par, t_index, mMarkov,
     #THIS IS CUMULATIVE OVER TIME INTERVAL WHEREAS INT RATE IS YEARLY
     coastal_damage_frac=grids.vPi_S_median[t_index]*np.dot(grids.vPDF_z[1:],(1-grids.vZ[1:]))
     
-    rental_price_C=par.dPsi+max(dP_C-(1-par.dDelta-coastal_damage_frac)/(1+par.r)*dP_C_prime,0)
-    rental_price_NC=par.dPsi+max(dP_NC-(1-par.dDelta)/(1+par.r)*dP_NC_prime,0)
-    
-    rental_price_lom_C=par.dPsi+max(dP_C_lom -(1-par.dDelta-coastal_damage_frac)/(1+par.r)*dP_C_prime_lom,0)
-    rental_price_lom_NC=par.dPsi+max(dP_NC_lom -(1-par.dDelta)/(1+par.r)*dP_NC_prime_lom,0)
+    rental_price_C=ut.rental_price_calc(par, dP_C, dP_C_prime, coastal_damage_frac)
+    rental_price_NC=ut.rental_price_calc(par, dP_NC, dP_NC_prime, 0.0)
+
+    rental_price_lom_C=ut.rental_price_calc(par, dP_C_lom, dP_C_prime_lom, coastal_damage_frac)
+    rental_price_lom_NC=ut.rental_price_calc(par, dP_NC_lom, dP_NC_prime_lom, 0.0)
     
     minpay_matrix_C, ltv_minpay_index_left_C, minpay_matrix_NC, ltv_minpay_index_left_NC, max_ltv_C,max_ltv_NC, max_ltv_index_C, max_ltv_index_NC=mortgage_matrix_solve(par, grids, dP_C_lag, dP_NC_lag, dP_C, dP_NC)
     
@@ -368,11 +368,11 @@ def update_dist_continuous(sceptics,stationary, it, initialise, grids, par, t_in
     #THIS IS CUMULATIVE OVER TIME INTERVAL WHEREAS INT RATE IS YEARLY
     coastal_damage_frac=grids.vPi_S_median[t_index]*np.dot(grids.vPDF_z[1:],(1-grids.vZ[1:]))
     
-    rental_price_C=par.dPsi+max(dP_C-(1-par.dDelta-coastal_damage_frac)/(1+par.r)*dP_C_prime,0)
-    rental_price_NC=par.dPsi+max(dP_NC-(1-par.dDelta)/(1+par.r)*dP_NC_prime,0)
-    
-    rental_price_lom_C=par.dPsi+max(dP_C_lom -(1-par.dDelta-coastal_damage_frac)/(1+par.r)*dP_C_prime_lom,0)
-    rental_price_lom_NC=par.dPsi+max(dP_NC_lom -(1-par.dDelta)/(1+par.r)*dP_NC_prime_lom,0)
+    rental_price_C=ut.rental_price_calc(par, dP_C, dP_C_prime, coastal_damage_frac)
+    rental_price_NC=ut.rental_price_calc(par, dP_NC, dP_NC_prime, 0.0)
+
+    rental_price_lom_C=ut.rental_price_calc(par, dP_C_lom, dP_C_prime_lom, coastal_damage_frac)
+    rental_price_lom_NC=ut.rental_price_calc(par, dP_NC_lom, dP_NC_prime_lom, 0.0)
     
     coastal_mass_J=np.zeros((k_dim))
     noncoastal_mass_J=np.zeros((k_dim))

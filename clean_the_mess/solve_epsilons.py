@@ -12,7 +12,7 @@ import misc_functions as misc
 import tauchen as tauch
 import par_epsilons as parfile
 import grid_creation as grid_creation
-import proper_welfare_debug as welfare_stats
+import welfare as welfare_stats
 
 ###########################################################
 ### main

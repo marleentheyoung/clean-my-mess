@@ -47,36 +47,13 @@ def Q_bequest(par,b):
     return Q_Bequest
 
 @njit
-def W_bequest_flooddamage(par,grids, h, b, dP):
-    vBequest_flooddamage = 0
-    for damage_index in range(grids.vZ.size):
-        dZ = grids.vZ[damage_index]
-        prob_dZ = grids.PDF_z[damage_index]
-        
-        vBequest_flooddamage += prob_dZ * par.dNu*((par.b_bar + (1-par.dDelta-par.dKappa_sell-(1-dZ))*h*dP + (1+par.r)*b)**(1-par.dSigma))/(1-par.dSigma)
+def rental_price_calc(par, dP, dP_prime, damage_frac):
+    """Compute rental price given current/future house price and flood damage fraction.
 
-    return vBequest_flooddamage
-
-@njit
-def W_bequest_noflooddamage(par,h, b, dP):
-    vBequest_noflooddamage=par.dNu*((par.b_bar + (1-par.dDelta-par.dKappa_sell)*h*dP + (1+par.r)*b)**(1-par.dSigma))/(1-par.dSigma)
-
-    return vBequest_noflooddamage
-
-@njit
-def Q_bequest_flooddamage(par, grids, h, b, dP):
-    Q_Bequest_flooddamage = 0
-    for damage_index in range(grids.vZ.size):
-        dZ = grids.vZ[damage_index]
-        prob_dZ = grids.PDF_z[damage_index]
-        
-        Q_Bequest_flooddamage += prob_dZ*par.dNu*(par.b_bar + (1-par.dDelta-par.dKappa_sell-(1-dZ))*h*dP + (1+par.r)*b)**(-par.dSigma)
-    return Q_Bequest_flooddamage
-
-@njit
-def Q_bequest_noflooddamage(par,h, b, dP):
-    Q_Bequest_noflooddamage=par.dNu*(par.b_bar + (1-par.dDelta-par.dKappa_sell)*h*dP + (1+par.r)*b)**(-par.dSigma)
-    return Q_Bequest_noflooddamage
+    For coastal: pass damage_frac = coastal_damage_frac
+    For non-coastal: pass damage_frac = 0.0
+    """
+    return par.dPsi + max(dP - (1 - par.dDelta - damage_frac) / (1 + par.r) * dP_prime, 0)
 
 @njit
 def renter_solve(par,rental_price, g_renter):

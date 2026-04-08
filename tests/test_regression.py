@@ -87,7 +87,7 @@ def test_find_expenditure_equiv(par_full, grids_and_markov_full):
 
     Run manually with: pytest tests/test_regression.py -m slow
     """
-    import proper_welfare_debug as welfare_stats
+    import welfare as welfare_stats
     from conftest import VCOEFF_C_INITIAL, VCOEFF_NC_INITIAL, VCOEFF_C, VCOEFF_NC
 
     grids, mMarkov = grids_and_markov_full
