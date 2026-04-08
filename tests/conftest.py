@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'clean_the_mess
 def par_full():
     """Full-grid parameter object. Created once per session (Numba compiles on first use)."""
     import misc_functions as misc
-    import par as parfile
+    import config as parfile
     return misc.construct_jitclass(parfile.par_dict)
 
 
@@ -27,7 +27,7 @@ def grids_and_markov_full(par_full):
 def par_reduced():
     """Reduced-grid parameter object for fast tests (iXin=3, iNumStates=3)."""
     import misc_functions as misc
-    import par as parfile
+    import config as parfile
     par_dict = parfile.par_dict.copy()
     par_dict["iXin"] = 3
     par_dict["iNumStates"] = 3

@@ -34,11 +34,11 @@ def create(par, experiment=False):
         
 
     if experiment:
-        vPi_S_median=par.vPi_S_median[int((2026-1998)/par.time_increment):]
+        vPi_S_median=par.vPi_S_median[int((par.experiment_year-par.model_start_year)/par.time_increment):]
     else:
         vPi_S_median=par.vPi_S_median    
-    vZ= np.array([1, 0.9, 0.7, 0.3])
-    vPDF_z= np.array([1, 0.4, 0.4, 0.2])
+    vZ = par.vZ
+    vPDF_z = par.vPDF_z
 
 
     vL_sim=np.linspace(0, 1.5, 35)
@@ -93,7 +93,7 @@ def create(par, experiment=False):
                   'vLkeps':np.linspace(0,5,2),
                   'mPTI': mPTI,
                   'vPi_S_median': vPi_S_median,
-                  'vTypes': np.array([0.58, 0.42]),
+                  'vTypes': par.vTypes,
                   'max_ltv': par.max_ltv, 
                   'vPi_E': vPi_E,
                   'vPi_L': vPi_L}
@@ -106,7 +106,7 @@ def net_payment_frac(mortgage_size, par, j, e_index, vChi, vE):
     if j<par.j_ret:
         pretax_income_pers=np.exp(vChi[j] + vE[e_index])
     else:
-        pretax_income_pers=0.7*np.exp(vChi[par.j_ret-1] + vE[e_index])   
+        pretax_income_pers=par.retirement_income_fraction*np.exp(vChi[par.j_ret-1] + vE[e_index])   
     posttax_income=pretax_income_pers-par.tau_0*(max(pretax_income_pers-par.r_m*mortgage_size,0))**(1-par.tau_1)
     mortgage_rebate=par.tau_0*(pretax_income_pers)**(1-par.tau_1)-(posttax_income-pretax_income_pers)
     payment_next = (par.r_m*(1+par.r_m)**(par.iNj-(j+1))/((1+par.r_m)**(par.iNj-(j+1))-1))*mortgage_size-mortgage_rebate

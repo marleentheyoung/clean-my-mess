@@ -20,7 +20,7 @@ def test_all_modules_import():
     import interp
     import misc_functions
     import grids
-    import par
+    import config
     import utility
     import lom
     import stayer_problem
@@ -35,7 +35,7 @@ def test_all_modules_import():
 
 def test_par_dict_keys():
     """Parameter dict has expected calibration keys."""
-    import par as parfile
+    import config as parfile
     required_keys = ["dBeta", "dSigma", "iNj", "dPhi", "dDelta", "r", "r_m",
                      "iNumStates", "dRho", "dSigmaeps", "iXin", "iBmax"]
     for key in required_keys:
@@ -44,7 +44,7 @@ def test_par_dict_keys():
 
 def test_par_values_final():
     """Spot-check that key parameters match the final calibration."""
-    import par as parfile
+    import config as parfile
     assert parfile.par_dict["iNj"] == 30
     assert parfile.par_dict["j_ret"] == 23
     assert parfile.par_dict["iNumStates"] == 5
